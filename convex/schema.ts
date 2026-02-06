@@ -44,4 +44,19 @@ export default defineSchema({
 		bonusCapacity: v.number(),
 		bonusExpiresAt: v.number(),
 	}),
+
+	// One global game: quarter scores for Super Bowl squares (row/col = last digit per quarter)
+	games: defineTable({
+		name: v.string(),
+		externalId: v.optional(v.string()),
+		quarters: v.array(
+			v.object({
+				label: v.string(),
+				rowTeamScore: v.number(),
+				colTeamScore: v.number(),
+			}),
+		),
+		updatedAt: v.number(),
+		source: v.union(v.literal("manual"), v.literal("scrape")),
+	}).index("by_updated", ["updatedAt"]),
 });

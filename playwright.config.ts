@@ -10,14 +10,17 @@ import { defineConfig, devices } from "@playwright/test";
  * Requires Convex: set NEXT_PUBLIC_CONVEX_URL in .env.local for the "full flow" play test.
  * No RESEND_API_KEY or STRIPE_* required; email is mocked when key is missing.
  *
+ * Tests run with one worker (serialized) so they don't contend for the same Convex DB:
+ * pool creation limits, admin cookies, and server load are all safer.
+ *
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
 	testDir: "./e2e",
-	fullyParallel: true,
+	fullyParallel: false,
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 2 : 0,
-	workers: process.env.CI ? 1 : undefined,
+	workers: 1,
 	reporter: "html",
 	use: {
 		baseURL: "http://localhost:3000",
@@ -26,7 +29,7 @@ export default defineConfig({
 	projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
 	webServer: {
 		command: "pnpm dev",
-		url: "http://localhost:3000",
+		url: "http://localhost:3000/api/ready",
 		reuseExistingServer: true,
 		timeout: 120_000,
 		stdout: "ignore",

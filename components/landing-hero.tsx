@@ -114,7 +114,10 @@ export function LandingHero() {
 			<main className="flex min-h-dvh flex-col items-center justify-center px-6 py-12">
 				<div className="flex w-full max-w-md flex-col gap-8 text-center">
 					<div className="flex flex-col gap-2">
-						<h2 data-testid="landing-success-heading" className="font-mono text-xl font-bold text-foreground">
+						<h2
+							data-testid="landing-success-heading"
+							className="font-mono text-xl font-bold text-foreground"
+						>
 							Check your email
 						</h2>
 						<p className="text-sm text-muted-foreground">

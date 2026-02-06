@@ -41,8 +41,9 @@ export default function AdminPage() {
 		};
 	}, [slug, router]);
 
-	// Fetch pool data
+	// Fetch pool data and global game
 	const poolData = useQuery(api.pools.getPoolBySlug, { slug });
+	const gameData = useQuery(api.games.getCurrentGame, {});
 
 	// Mutations
 	const updateMaxSquaresMutation = useMutation(api.pools.updateMaxSquares);
@@ -81,6 +82,31 @@ export default function AdminPage() {
 	// Transform to Pool type for components
 	const pool = transformToPool(poolData.pool, poolData.squares, poolData.participants);
 
+	// Global game: winning square per quarter (score digits, mapped to grid in SquaresGrid)
+	const winningSquares =
+		gameData?.found === true
+			? gameData.game.quarters.map((q) => ({
+					quarterLabel: q.label,
+					row: q.rowTeamScore % 10,
+					col: q.colTeamScore % 10,
+				}))
+			: [];
+
+	// Current score highlight
+	const numbersAssigned = pool.rowNumbers.some((n) => n !== null);
+	const currentScore = numbersAssigned
+		? gameData?.found === true && gameData.game.quarters.length > 0
+			? {
+					rowDigit:
+						gameData.game.quarters[gameData.game.quarters.length - 1]
+							.rowTeamScore % 10,
+					colDigit:
+						gameData.game.quarters[gameData.game.quarters.length - 1]
+							.colTeamScore % 10,
+				}
+			: { rowDigit: 0, colDigit: 0 }
+		: null;
+
 	// Generate share URL
 	const shareUrl =
 		typeof window !== "undefined"
@@ -115,6 +141,9 @@ export default function AdminPage() {
 			onUpdateMaxSquares={handleUpdateMaxSquares}
 			onAssignNumbers={handleAssignNumbers}
 			onDistributeSquares={handleDistributeSquares}
+			winningSquares={winningSquares}
+			game={gameData?.found ? gameData.game : null}
+			currentScore={currentScore}
 		/>
 	);
 }

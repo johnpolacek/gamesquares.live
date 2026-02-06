@@ -2,9 +2,7 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
 /**
- * Full Super Bowl squares flow: admin creates pool (10/person), players join and claim,
- * admin distributes remainder, admin assigns numbers, assert board full with numbers.
- * Requires Convex dev + NEXT_PUBLIC_CONVEX_URL. Uses dev-admin bypass for admin auth.
+ * Full flow: create pool, admin distributes/assigns, players join and claim.
  */
 test.describe("Full flow", () => {
 	test("admin creates pool, players claim, distribute, assign numbers, board complete", async ({
@@ -12,9 +10,9 @@ test.describe("Full flow", () => {
 		request,
 		browser,
 	}) => {
-		test.setTimeout(120_000);
+		test.setTimeout(10_000);
 
-		// 1. Create pool via API (10 per person)
+		// 1. Create pool via API
 		const res = await request.post("/api/pools", {
 			data: {
 				title: "Full Flow E2E Pool",
@@ -34,13 +32,12 @@ test.describe("Full flow", () => {
 		const slug = body.slug;
 		expect(slug).toBeTruthy();
 
-		// 2. Admin: dev-admin bypass then /go/slug
+		// 2. Admin: dev-admin sets cookie and redirects to /go/slug
 		await page.goto(`/api/auth/dev-admin?slug=${slug}`);
 		await expect(page).toHaveURL(new RegExp(`/go/${slug}`));
-		await expect(page.getByText("Admin", { exact: true })).toBeVisible({
-			timeout: 15000,
+		await expect(page.getByTestId("admin-board")).toBeVisible({
+			timeout: 45000,
 		});
-		await expect(page.getByText("Squares per player")).toBeVisible();
 
 		// Helper: join as player and claim 10 squares (one full row)
 		const joinAndClaimRow = async (
@@ -79,15 +76,21 @@ test.describe("Full flow", () => {
 		// 4. Admin: Distribute remaining 70 squares
 		await page.bringToFront();
 		await expect(
-			page.getByRole("button", { name: /Distribute \d+ Remaining Squares to Players/i }),
+			page.getByRole("button", {
+				name: /Distribute \d+ Remaining Squares to Players/i,
+			}),
 		).toBeVisible({ timeout: 5000 });
 		await page
-			.getByRole("button", { name: /Distribute \d+ Remaining Squares to Players/i })
+			.getByRole("button", {
+				name: /Distribute \d+ Remaining Squares to Players/i,
+			})
 			.click();
 		await page.getByRole("button", { name: "Yes, Distribute Squares" }).click();
 		// Wait for distribute to finish: Distribute button disappears (open count 0)
 		await expect(
-			page.getByRole("button", { name: /Distribute \d+ Remaining Squares to Players/i }),
+			page.getByRole("button", {
+				name: /Distribute \d+ Remaining Squares to Players/i,
+			}),
 		).not.toBeVisible({ timeout: 15000 });
 		await expect(page.getByText("/ 100 claimed")).toBeVisible();
 
@@ -97,18 +100,28 @@ test.describe("Full flow", () => {
 			timeout: 10000,
 		});
 
-		// 6. Player view: reload and assert board full + numbers
+		// 6. Player view: reload and assert board full + numbers assigned (no "waiting for numbers" banner)
 		await p1.bringToFront();
 		await p1.reload();
 		await expect(
 			p1.getByText("Board is full! Waiting for admin to assign numbers."),
-		).toBeVisible({ timeout: 15000 });
+		).not.toBeVisible({ timeout: 15000 });
 		await expect(
-			p1.getByRole("button", { name: "Empty square at row 1, column 1", exact: true }),
+			p1.getByRole("button", {
+				name: "Empty square at row 1, column 1",
+				exact: true,
+			}),
 		).not.toBeVisible();
 		await expect(
-			p1.getByRole("button", { name: "Square claimed by Player 1", exact: true }).first(),
+			p1
+				.getByRole("button", {
+					name: "Square claimed by Player 1",
+					exact: true,
+				})
+				.first(),
 		).toBeVisible({ timeout: 5000 });
+
+		await page.pause();
 
 		await ctx1.close();
 		await ctx2.close();

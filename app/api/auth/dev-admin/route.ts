@@ -15,8 +15,11 @@ function isLocalhost(request: NextRequest): boolean {
 			return "";
 		}
 	})();
+	const isDevOrTest =
+		process.env.NODE_ENV === "development" ||
+		process.env.NODE_ENV === "test";
 	return (
-		process.env.NODE_ENV === "development" &&
+		isDevOrTest &&
 		(/^(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$/i.test(host) ||
 			/^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/i.test(urlHost))
 	);

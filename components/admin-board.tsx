@@ -2,9 +2,18 @@
 
 import { useState } from "react";
 import { GraphicIcon } from "@/components/graphic-icon";
-import { SquaresGrid } from "@/components/squares-grid";
+import { SquaresGrid, type WinningSquare } from "@/components/squares-grid";
 import type { Pool } from "@/lib/pool-store";
 import { getClaimedCount } from "@/lib/pool-store";
+
+type GameInfo = {
+	name: string;
+	quarters: Array<{
+		label: string;
+		rowTeamScore: number;
+		colTeamScore: number;
+	}>;
+};
 
 type AdminBoardProps = {
 	pool: Pool;
@@ -19,6 +28,9 @@ type AdminBoardProps = {
 		distributed: number;
 		error?: string;
 	}>;
+	winningSquares?: WinningSquare[];
+	game?: GameInfo | null;
+	currentScore?: { rowDigit: number; colDigit: number } | null;
 };
 
 const SQUARES_OPTIONS = [1, 2, 4, 5, 10, 20, 25, 50];
@@ -30,6 +42,9 @@ export function AdminBoard({
 	onUpdateMaxSquares,
 	onAssignNumbers,
 	onDistributeSquares,
+	winningSquares = [],
+	game = null,
+	currentScore = null,
 }: AdminBoardProps) {
 	const [copied, setCopied] = useState(false);
 	const [maxError, setMaxError] = useState<string | null>(null);
@@ -119,7 +134,10 @@ export function AdminBoard({
 	};
 
 	return (
-		<div className="flex min-h-dvh flex-col bg-background">
+		<div
+			className="flex min-h-dvh flex-col bg-background"
+			data-testid="admin-board"
+		>
 			<header className="flex items-center justify-between px-4 py-3 bg-card shadow-sm ring-1 ring-border/50">
 				<div className="flex items-center gap-2">
 					<svg
@@ -178,6 +196,27 @@ export function AdminBoard({
 					</span>
 				</div>
 			</header>
+
+			{/* Global game scores */}
+			{game && (
+				<div className="mx-auto w-full max-w-lg px-4 pt-4">
+					<div className="rounded-lg bg-card p-3 ring-1 ring-border">
+						<p className="text-xs font-semibold text-muted-foreground">
+							{game.name}
+						</p>
+						<div className="mt-1 flex flex-wrap gap-x-4 text-[10px] text-foreground">
+							{game.quarters.map((q) => (
+								<span key={q.label}>
+									{q.label}: {q.rowTeamScore}–{q.colTeamScore}
+								</span>
+							))}
+						</div>
+						<p className="mt-1 text-[10px] text-muted-foreground">
+							Quarter winners highlighted on grid.
+						</p>
+					</div>
+				</div>
+			)}
 
 			{/* Share URL */}
 			<div className="mx-auto w-full max-w-lg px-4 pt-4">
@@ -281,7 +320,12 @@ export function AdminBoard({
 
 			{/* Grid */}
 			<div className="px-4 pt-4">
-				<SquaresGrid pool={pool} interactive={false} />
+				<SquaresGrid
+					pool={pool}
+					interactive={false}
+					winningSquares={winningSquares}
+					currentScore={currentScore}
+				/>
 			</div>
 
 			{/* Stats */}
@@ -374,7 +418,7 @@ export function AdminBoard({
 					</p>
 				)}
 				{!numbersAssigned && claimedCount < 100 && (
-					<p className="text-center text-xs text-muted-foreground">
+					<p className="text-center text-balance text-xs text-muted-foreground">
 						Share the link above so players can pick their squares. You can
 						assign numbers at any time.
 					</p>
@@ -465,7 +509,10 @@ export function AdminBoard({
 							Distribute {openCount} squares?
 						</h3>
 						<p className="mt-2 text-sm text-muted-foreground">
-							The remaining unclaimed squares will be randomly assigned to the {allPlayerNames.length} player{allPlayerNames.length === 1 ? "" : "s"}. This cannot be undone. Continue?
+							The remaining unclaimed squares will be randomly assigned to the{" "}
+							{allPlayerNames.length} player
+							{allPlayerNames.length === 1 ? "" : "s"}. This cannot be undone.
+							Continue?
 						</p>
 						<div className="mt-5 flex flex-col gap-2">
 							<button

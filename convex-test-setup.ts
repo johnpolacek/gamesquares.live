@@ -1,3 +1,4 @@
+// @ts-nocheck — import.meta.glob is Vite-only; this file is used by Vitest, not tsc.
 /**
  * Convex test setup: load all Convex function modules (exclude test files)
  * so convexTest(schema, modules) can run mutations/queries.

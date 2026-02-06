@@ -41,6 +41,7 @@ export default function PlayPage() {
 
 	// Convex
 	const poolData = useQuery(api.pools.getPoolBySlug, { slug });
+	const gameData = useQuery(api.games.getCurrentGame, {});
 	const joinPoolMutation = useMutation(api.participants.joinPool);
 	const claimSquaresMutation = useMutation(api.squares.claimSquares);
 	const releaseSquaresMutation = useMutation(api.squares.releaseSquares);
@@ -178,7 +179,10 @@ export default function PlayPage() {
 	// Loading
 	if (poolData === undefined) {
 		return (
-			<main className="flex min-h-dvh flex-col items-center justify-center px-6 py-12 bg-background">
+			<main
+				className="flex min-h-dvh flex-col items-center justify-center px-6 py-12 bg-background"
+				data-testid="play-loading"
+			>
 				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
 			</main>
 		);
@@ -189,7 +193,12 @@ export default function PlayPage() {
 		return (
 			<main className="flex min-h-dvh flex-col items-center justify-center px-6 py-12 bg-background">
 				<div className="flex flex-col items-center gap-6 text-center max-w-md">
-					<h1 data-testid="play-not-found-heading" className="text-2xl font-bold">Pool Not Found</h1>
+					<h1
+						data-testid="play-not-found-heading"
+						className="text-2xl font-bold"
+					>
+						Pool Not Found
+					</h1>
 					<p className="text-muted-foreground">
 						This pool doesn&apos;t exist or may have been removed.
 					</p>
@@ -212,6 +221,16 @@ export default function PlayPage() {
 	);
 	const boardFull = isBoardFull(pool);
 
+	// Global game: winning square per quarter (last digit of row/col team score)
+	const winningSquares =
+		gameData?.found === true
+			? gameData.game.quarters.map((q) => ({
+					quarterLabel: q.label,
+					row: q.rowTeamScore % 10,
+					col: q.colTeamScore % 10,
+				}))
+			: [];
+
 	// Build identity from stored participant
 	const identity: PlayerIdentity | null = storedParticipant
 		? {
@@ -222,8 +241,46 @@ export default function PlayPage() {
 		: null;
 
 	const currentCount = identity ? getPlayerSquareCount(pool, identity.name) : 0;
-	const remaining = pool.squaresPerPerson - currentCount;
+	const remaining = Math.max(0, pool.squaresPerPerson - currentCount);
 	const canPick = remaining > 0 && !boardFull && pool.status === "open";
+
+	// Current score highlight: map latest game score (or default 0-0) to grid position
+	const numbersAssigned = pool.rowNumbers.some((n) => n !== null);
+	const currentScore = numbersAssigned
+		? gameData?.found === true && gameData.game.quarters.length > 0
+			? {
+					rowDigit:
+						gameData.game.quarters[gameData.game.quarters.length - 1]
+							.rowTeamScore % 10,
+					colDigit:
+						gameData.game.quarters[gameData.game.quarters.length - 1]
+							.colTeamScore % 10,
+				}
+			: { rowDigit: 0, colDigit: 0 }
+		: null;
+
+	// Quarter display with winner/currently-winning player per quarter
+	const quarterDisplays =
+		gameData?.found === true && numbersAssigned
+			? gameData.game.quarters.map((q, idx) => {
+					const rowDigit = q.rowTeamScore % 10;
+					const colDigit = q.colTeamScore % 10;
+					const rowIdx = pool.rowNumbers.indexOf(rowDigit);
+					const colIdx = pool.colNumbers.indexOf(colDigit);
+					const playerName =
+						rowIdx >= 0 &&
+						colIdx >= 0 &&
+						pool.squares[rowIdx]?.[colIdx]?.claimedBy?.name;
+					const isLatest = idx === gameData.game.quarters.length - 1;
+					return {
+						label: q.label,
+						rowTeamScore: q.rowTeamScore,
+						colTeamScore: q.colTeamScore,
+						playerName: playerName ?? null,
+						isLatest,
+					};
+				})
+			: null;
 
 	// Join form (not joined yet)
 	if (!storedParticipant) {
@@ -479,7 +536,8 @@ export default function PlayPage() {
 						size={20}
 					/>
 					<span className="rounded bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">
-						{identity?.initials}
+						<span className="sm:hidden">{identity?.initials}</span>
+						<span className="hidden sm:inline">{identity?.name}</span>
 					</span>
 				</div>
 			</header>
@@ -504,7 +562,7 @@ export default function PlayPage() {
 				</div>
 			)}
 
-			{boardFull && pool.status !== "locked" && (
+			{boardFull && pool.status !== "locked" && !numbersAssigned && (
 				<div className="bg-[oklch(0.85_0.15_80)] px-4 py-2.5">
 					<p className="text-center text-sm font-semibold text-[oklch(0.3_0.1_80)]">
 						Board is full! Waiting for admin to assign numbers.
@@ -517,6 +575,29 @@ export default function PlayPage() {
 					<p className="text-center text-sm font-semibold text-primary">
 						Board is locked. Good luck!
 					</p>
+				</div>
+			)}
+
+			{gameData?.found && (
+				<div className="w-full max-w-sm mx-4 sm:mx-auto mt-2 rounded-lg bg-card px-3 py-2 ring-1 ring-border">
+					<p className="text-xs font-semibold text-muted-foreground">
+						{gameData.game.name}
+					</p>
+					<div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-sm font-medium text-foreground">
+						{quarterDisplays
+							? quarterDisplays.map((q) => (
+									<span key={q.label}>
+										{q.label}: {q.rowTeamScore}–{q.colTeamScore}
+										{q.playerName != null &&
+											` (${q.isLatest ? "currently winning" : "winner"}: ${q.playerName})`}
+									</span>
+								))
+							: gameData.game.quarters.map((q) => (
+									<span key={q.label}>
+										{q.label}: {q.rowTeamScore}–{q.colTeamScore}
+									</span>
+								))}
+					</div>
 				</div>
 			)}
 
@@ -540,6 +621,8 @@ export default function PlayPage() {
 							? poolData.squares.filter((s) => !s.participantId).length > 0
 							: false
 					}
+					winningSquares={winningSquares}
+					currentScore={currentScore}
 				/>
 			</div>
 

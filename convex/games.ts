@@ -1,0 +1,99 @@
+import { v } from "convex/values";
+import { internalMutation, mutation, query } from "./_generated/server";
+
+const quarterValidator = v.object({
+	label: v.string(),
+	rowTeamScore: v.number(),
+	colTeamScore: v.number(),
+});
+
+/**
+ * Get the current global game (most recently updated).
+ * Used by play and admin UIs to show scores and compute quarter winners.
+ */
+export const getCurrentGame = query({
+	args: {},
+	returns: v.union(
+		v.object({
+			found: v.literal(true),
+			game: v.object({
+				_id: v.id("games"),
+				name: v.string(),
+				externalId: v.optional(v.string()),
+				quarters: v.array(quarterValidator),
+				updatedAt: v.number(),
+				source: v.union(v.literal("manual"), v.literal("scrape")),
+			}),
+		}),
+		v.object({ found: v.literal(false) }),
+	),
+	handler: async (ctx) => {
+		const game = await ctx.db
+			.query("games")
+			.withIndex("by_updated")
+			.order("desc")
+			.first();
+		if (!game) {
+			return { found: false as const };
+		}
+		return {
+			found: true as const,
+			game: {
+				_id: game._id,
+				name: game.name,
+				externalId: game.externalId,
+				quarters: game.quarters,
+				updatedAt: game.updatedAt,
+				source: game.source,
+			},
+		};
+	},
+});
+
+/**
+ * Set quarter scores manually. Requires GLOBAL_ADMIN_SECRET to match.
+ * Call from API route or dashboard that has the secret.
+ */
+export const setScoresManual = mutation({
+	args: {
+		adminSecret: v.string(),
+		name: v.string(),
+		quarters: v.array(quarterValidator),
+	},
+	returns: v.object({ ok: v.boolean(), error: v.optional(v.string()) }),
+	handler: async (ctx, args) => {
+		const expected = process.env.GLOBAL_ADMIN_SECRET;
+		if (!expected || args.adminSecret !== expected) {
+			return { ok: false, error: "Unauthorized" };
+		}
+		const now = Date.now();
+		await ctx.db.insert("games", {
+			name: args.name,
+			quarters: args.quarters,
+			updatedAt: now,
+			source: "manual",
+		});
+		return { ok: true };
+	},
+});
+
+/**
+ * Internal: set scores from scraper/action. Called by fetchNflScores action.
+ */
+export const setScoresFromScrape = internalMutation({
+	args: {
+		name: v.string(),
+		externalId: v.optional(v.string()),
+		quarters: v.array(quarterValidator),
+	},
+	handler: async (ctx, args) => {
+		const now = Date.now();
+		await ctx.db.insert("games", {
+			name: args.name,
+			externalId: args.externalId,
+			quarters: args.quarters,
+			updatedAt: now,
+			source: "scrape",
+		});
+	},
+});
