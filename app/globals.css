@@ -141,3 +141,14 @@
 		@apply cursor-pointer;
 	}
 }
+
+/* View page dark grid overrides – arbitrary variants with escaped slashes
+   break Tailwind v4's CSS parser, so we express them as plain CSS instead. */
+@layer utilities {
+	.view-grid-dark [class*="border-border/"] {
+		border-color: color-mix(in srgb, #fff 10%, transparent);
+	}
+	.view-grid-dark [class*="bg-background/"] {
+		background-color: color-mix(in srgb, #fff 5%, transparent);
+	}
+}

@@ -177,6 +177,35 @@ test.describe("Full flow", () => {
 		await expectPlayerScore(/Q1: 0–3/);
 		await expect(p1.getByText(/currently winning/)).toBeVisible();
 
+		// ================================================================
+		// VIEW PAGE: Verify big-screen scoreboard mid-game
+		// ================================================================
+		const viewCtx = await browser.newContext();
+		const viewPage = await viewCtx.newPage();
+		await viewPage.goto(`/view/${slug}`);
+		await expect(viewPage.getByTestId("view-scoreboard")).toBeVisible({
+			timeout: 15000,
+		});
+
+		// Should show the game name and live badge
+		await expect(viewPage.getByText("Super Bowl LIX")).toBeVisible({
+			timeout: 10000,
+		});
+		await expect(viewPage.getByText("Live", { exact: true })).toBeVisible();
+
+		await page.pause();
+
+		// Should show current score (0 - 3)
+		await expect(viewPage.getByTestId("view-eagles-score")).toHaveText("0");
+		await expect(viewPage.getByTestId("view-patriots-score")).toHaveText("3");
+
+		// Should show "Next Score Wins" what-if scenarios
+		await expect(viewPage.getByTestId("view-what-if")).toBeVisible();
+		await expect(viewPage.getByText("Eagles FG")).toBeVisible();
+		await expect(viewPage.getByText("Eagles TD")).toBeVisible();
+		await expect(viewPage.getByText("Patriots FG")).toBeVisible();
+		await expect(viewPage.getByText("Patriots TD")).toBeVisible();
+
 		// Eagles score a touchdown + extra point: 0-10
 		await updateScore("Q1", "0", "10");
 		await expectPlayerScore(/Q1: 0–10/);
@@ -302,8 +331,31 @@ test.describe("Full flow", () => {
 		});
 		await expect(page.getByText(/FINAL: 34–41/)).toBeVisible();
 
-		await page.pause();
+		// ================================================================
+		// VIEW PAGE: Verify big-screen scoreboard after game complete
+		// ================================================================
+		await viewPage.bringToFront();
+		await viewPage.reload();
+		await expect(viewPage.getByTestId("view-scoreboard")).toBeVisible({
+			timeout: 15000,
+		});
 
+		// Should show Final badge (no Live badge)
+		await expect(viewPage.getByText("Final").first()).toBeVisible({
+			timeout: 10000,
+		});
+
+		// Should show final scores
+		await expect(viewPage.getByTestId("view-eagles-score")).toHaveText("34");
+		await expect(viewPage.getByTestId("view-patriots-score")).toHaveText("41");
+
+		// Quarter scores panel should show all quarters with winners
+		await expect(viewPage.getByTestId("view-quarter-scores")).toBeVisible();
+
+		// "Next Score Wins" should NOT be visible when game is complete
+		await expect(viewPage.getByTestId("view-what-if")).not.toBeVisible();
+
+		await viewCtx.close();
 		await ctx1.close();
 		await ctx2.close();
 		await ctx3.close();

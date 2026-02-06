@@ -6,17 +6,6 @@ import { SquaresGrid, type WinningSquare } from "@/components/squares-grid";
 import type { Pool } from "@/lib/pool-store";
 import { getClaimedCount } from "@/lib/pool-store";
 
-type GameInfo = {
-	name: string;
-	quarters: Array<{
-		label: string;
-		rowTeamScore: number;
-		colTeamScore: number;
-		complete?: boolean;
-	}>;
-	gameComplete?: boolean;
-};
-
 type AdminBoardProps = {
 	pool: Pool;
 	shareUrl: string;
@@ -31,7 +20,6 @@ type AdminBoardProps = {
 		error?: string;
 	}>;
 	winningSquares?: WinningSquare[];
-	game?: GameInfo | null;
 	currentScore?: { rowDigit: number; colDigit: number } | null;
 };
 
@@ -45,7 +33,6 @@ export function AdminBoard({
 	onAssignNumbers,
 	onDistributeSquares,
 	winningSquares = [],
-	game = null,
 	currentScore = null,
 }: AdminBoardProps) {
 	const [copied, setCopied] = useState(false);
@@ -198,32 +185,6 @@ export function AdminBoard({
 					</span>
 				</div>
 			</header>
-
-			{/* Global game scores */}
-			{game && (
-				<div className="mx-auto w-full max-w-lg px-4 pt-4">
-					<div className="rounded-lg bg-card p-3 ring-1 ring-border">
-						<p className="text-xs font-semibold text-muted-foreground">
-							{game.name}
-						</p>
-						<div className="mt-1 flex flex-wrap gap-x-4 text-[10px] text-foreground">
-							{game.quarters.map((q, idx) => {
-								const isLast = idx === game.quarters.length - 1;
-								const displayLabel =
-									game.gameComplete && isLast ? "FINAL" : q.label;
-								return (
-									<span key={q.label}>
-										{displayLabel}: {q.rowTeamScore}–{q.colTeamScore}
-									</span>
-								);
-							})}
-						</div>
-						<p className="mt-1 text-[10px] text-muted-foreground">
-							Quarter winners highlighted on grid.
-						</p>
-					</div>
-				</div>
-			)}
 
 			{/* Share URL */}
 			<div className="mx-auto w-full max-w-lg px-4 pt-4">
