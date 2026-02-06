@@ -1,0 +1,267 @@
+/**
+ * Searchable emoji + Lucide icon list for the player icon picker.
+ * Each entry has a value (emoji char or "lucide:IconName") and keywords for search.
+ */
+
+export type EmojiEntry = { emoji: string; keywords: string };
+
+/** Unified picker entry: value is either an emoji or "lucide:IconName". */
+export type PickerEntry = { value: string; keywords: string };
+
+// Large selection: sports, animals, symbols, food, objects, etc.
+const EMOJI_LIST: EmojiEntry[] = [
+	// Sports & competition (keep existing first for default)
+	{ emoji: "🏈", keywords: "football sports ball game" },
+	{ emoji: "🦅", keywords: "eagle bird" },
+	{ emoji: "🏆", keywords: "trophy win champion" },
+	{ emoji: "⭐", keywords: "star" },
+	{ emoji: "🔥", keywords: "fire flame hot" },
+	{ emoji: "💎", keywords: "diamond gem" },
+	{ emoji: "🎯", keywords: "target bullseye" },
+	{ emoji: "🎲", keywords: "dice game" },
+	{ emoji: "👑", keywords: "crown king queen" },
+	{ emoji: "🍀", keywords: "clover lucky four leaf" },
+	{ emoji: "⚡", keywords: "lightning bolt zap" },
+	{ emoji: "🌟", keywords: "star glow" },
+	{ emoji: "🎪", keywords: "circus tent" },
+	{ emoji: "🏅", keywords: "medal sports" },
+	{ emoji: "🎰", keywords: "slot machine casino" },
+	{ emoji: "🃏", keywords: "joker card" },
+	{ emoji: "🐻", keywords: "bear" },
+	{ emoji: "🦁", keywords: "lion" },
+	{ emoji: "🐯", keywords: "tiger" },
+	{ emoji: "🦊", keywords: "fox" },
+	// More animals
+	{ emoji: "🐶", keywords: "dog puppy" },
+	{ emoji: "🐱", keywords: "cat" },
+	{ emoji: "🐼", keywords: "panda" },
+	{ emoji: "🐨", keywords: "koala" },
+	{ emoji: "🐸", keywords: "frog" },
+	{ emoji: "🐵", keywords: "monkey" },
+	{ emoji: "🦄", keywords: "unicorn" },
+	{ emoji: "🐲", keywords: "dragon" },
+	{ emoji: "🦋", keywords: "butterfly" },
+	{ emoji: "🐝", keywords: "bee" },
+	{ emoji: "🐬", keywords: "dolphin" },
+	{ emoji: "🦈", keywords: "shark" },
+	{ emoji: "🐳", keywords: "whale" },
+	{ emoji: "🦉", keywords: "owl" },
+	{ emoji: "🐔", keywords: "chicken" },
+	{ emoji: "🐧", keywords: "penguin" },
+	{ emoji: "🦩", keywords: "flamingo" },
+	{ emoji: "🐴", keywords: "horse" },
+	{ emoji: "🐮", keywords: "cow" },
+	{ emoji: "🐷", keywords: "pig" },
+	// Food & drink
+	{ emoji: "🍕", keywords: "pizza" },
+	{ emoji: "🍔", keywords: "burger" },
+	{ emoji: "🍟", keywords: "fries" },
+	{ emoji: "🌮", keywords: "taco" },
+	{ emoji: "🍺", keywords: "beer" },
+	{ emoji: "🍷", keywords: "wine" },
+	{ emoji: "🍿", keywords: "popcorn" },
+	{ emoji: "🍩", keywords: "donut" },
+	{ emoji: "🍪", keywords: "cookie" },
+	{ emoji: "🎂", keywords: "cake birthday" },
+	{ emoji: "🍦", keywords: "ice cream" },
+	{ emoji: "☕", keywords: "coffee" },
+	{ emoji: "🍎", keywords: "apple" },
+	{ emoji: "🍋", keywords: "lemon" },
+	{ emoji: "🍉", keywords: "watermelon" },
+	{ emoji: "🍇", keywords: "grape" },
+	{ emoji: "🥑", keywords: "avocado" },
+	{ emoji: "🌶️", keywords: "pepper hot" },
+	{ emoji: "🧁", keywords: "cupcake" },
+	{ emoji: "🍫", keywords: "chocolate" },
+	// Objects & symbols
+	{ emoji: "🎸", keywords: "guitar music" },
+	{ emoji: "🎺", keywords: "trumpet music" },
+	{ emoji: "🎷", keywords: "saxophone music" },
+	{ emoji: "🥁", keywords: "drum" },
+	{ emoji: "🎹", keywords: "piano keyboard" },
+	{ emoji: "🎬", keywords: "movie film" },
+	{ emoji: "📷", keywords: "camera" },
+	{ emoji: "💡", keywords: "light bulb idea" },
+	{ emoji: "🔑", keywords: "key" },
+	{ emoji: "💰", keywords: "money bag" },
+	{ emoji: "💵", keywords: "dollar bill" },
+	{ emoji: "🎁", keywords: "gift present" },
+	{ emoji: "🎈", keywords: "balloon" },
+	{ emoji: "🎉", keywords: "party celebrate" },
+	{ emoji: "🚀", keywords: "rocket space" },
+	{ emoji: "✈️", keywords: "plane airplane" },
+	{ emoji: "🚗", keywords: "car" },
+	{ emoji: "🏠", keywords: "house home" },
+	{ emoji: "🌈", keywords: "rainbow" },
+	{ emoji: "☀️", keywords: "sun" },
+	{ emoji: "🌙", keywords: "moon" },
+	{ emoji: "❄️", keywords: "snow cold" },
+	{ emoji: "💧", keywords: "water drop" },
+	{ emoji: "🌸", keywords: "flower cherry blossom" },
+	{ emoji: "🌺", keywords: "flower hibiscus" },
+	{ emoji: "🌻", keywords: "sunflower" },
+	{ emoji: "🌹", keywords: "rose flower" },
+	{ emoji: "🪷", keywords: "lotus flower" },
+	// Faces & people
+	{ emoji: "😎", keywords: "cool sunglasses" },
+	{ emoji: "🤩", keywords: "star eyes excited" },
+	{ emoji: "😇", keywords: "angel innocent" },
+	{ emoji: "🥳", keywords: "party celebrate" },
+	{ emoji: "🤠", keywords: "cowboy" },
+	{ emoji: "👻", keywords: "ghost" },
+	{ emoji: "💀", keywords: "skull" },
+	{ emoji: "👽", keywords: "alien" },
+	{ emoji: "🤖", keywords: "robot" },
+	{ emoji: "👾", keywords: "alien monster" },
+	// More sports & activities
+	{ emoji: "⚽", keywords: "soccer football" },
+	{ emoji: "🏀", keywords: "basketball" },
+	{ emoji: "⚾", keywords: "baseball" },
+	{ emoji: "🎾", keywords: "tennis" },
+	{ emoji: "🏐", keywords: "volleyball" },
+	{ emoji: "🎱", keywords: "pool billiard" },
+	{ emoji: "🏒", keywords: "hockey" },
+	{ emoji: "⛳", keywords: "golf" },
+	{ emoji: "🎳", keywords: "bowling" },
+	{ emoji: "🎣", keywords: "fishing" },
+	{ emoji: "🥊", keywords: "boxing" },
+	{ emoji: "🏋️", keywords: "weight lifting" },
+	{ emoji: "🚴", keywords: "biking cycle" },
+	{ emoji: "🎿", keywords: "ski" },
+	{ emoji: "🛶", keywords: "canoe" },
+	// Misc
+	{ emoji: "🧩", keywords: "puzzle" },
+	{ emoji: "🎨", keywords: "art paint" },
+	{ emoji: "🖌️", keywords: "paintbrush" },
+	{ emoji: "📚", keywords: "books" },
+	{ emoji: "✏️", keywords: "pencil" },
+	{ emoji: "📌", keywords: "pin" },
+	{ emoji: "🗺️", keywords: "map" },
+	{ emoji: "🧭", keywords: "compass" },
+	{ emoji: "⏰", keywords: "clock time" },
+	{ emoji: "🔔", keywords: "bell" },
+	{ emoji: "🛡️", keywords: "shield" },
+	{ emoji: "⚔️", keywords: "sword" },
+	{ emoji: "🏹", keywords: "bow arrow" },
+	{ emoji: "🧲", keywords: "magnet" },
+	{ emoji: "🔮", keywords: "crystal ball" },
+	{ emoji: "🪄", keywords: "wand magic" },
+	{ emoji: "🧿", keywords: "evil eye" },
+	{ emoji: "💜", keywords: "heart purple" },
+	{ emoji: "🖤", keywords: "heart black" },
+	{ emoji: "🤍", keywords: "heart white" },
+	{ emoji: "💚", keywords: "heart green" },
+	{ emoji: "💙", keywords: "heart blue" },
+	{ emoji: "🧡", keywords: "heart orange" },
+	{ emoji: "💛", keywords: "heart yellow" },
+	{ emoji: "❤️", keywords: "heart red" },
+];
+
+/** Lucide icons for the picker (value stored as "lucide:IconName"). */
+const LUCIDE_ENTRIES: PickerEntry[] = [
+	{ value: "lucide:Trophy", keywords: "trophy win champion sports" },
+	{ value: "lucide:Star", keywords: "star" },
+	{ value: "lucide:Flame", keywords: "fire flame hot" },
+	{ value: "lucide:Zap", keywords: "lightning bolt zap" },
+	{ value: "lucide:Target", keywords: "target bullseye" },
+	{ value: "lucide:Crown", keywords: "crown king queen" },
+	{ value: "lucide:Heart", keywords: "heart love" },
+	{ value: "lucide:Gem", keywords: "diamond gem" },
+	{ value: "lucide:Music", keywords: "music" },
+	{ value: "lucide:Gamepad2", keywords: "game controller" },
+	{ value: "lucide:Sparkles", keywords: "sparkles star" },
+	{ value: "lucide:Award", keywords: "award medal" },
+	{ value: "lucide:Shield", keywords: "shield" },
+	{ value: "lucide:Swords", keywords: "swords game" },
+	{ value: "lucide:PartyPopper", keywords: "party celebrate" },
+	{ value: "lucide:Lightbulb", keywords: "light bulb idea" },
+	{ value: "lucide:Bird", keywords: "bird" },
+	{ value: "lucide:Fish", keywords: "fish" },
+	{ value: "lucide:Cat", keywords: "cat" },
+	{ value: "lucide:Dog", keywords: "dog" },
+	{ value: "lucide:Palette", keywords: "art paint palette" },
+	{ value: "lucide:Apple", keywords: "apple fruit" },
+	{ value: "lucide:Beer", keywords: "beer drink" },
+	{ value: "lucide:Bike", keywords: "bike bicycle" },
+	{ value: "lucide:Bot", keywords: "robot bot" },
+	{ value: "lucide:Bug", keywords: "bug insect" },
+	{ value: "lucide:Cake", keywords: "cake birthday" },
+	{ value: "lucide:Camera", keywords: "camera photo" },
+	{ value: "lucide:Car", keywords: "car" },
+	{ value: "lucide:Castle", keywords: "castle" },
+	{ value: "lucide:Cherry", keywords: "cherry fruit" },
+	{ value: "lucide:Clover", keywords: "clover lucky" },
+	{ value: "lucide:Cloud", keywords: "cloud" },
+	{ value: "lucide:CloudRain", keywords: "rain cloud" },
+	{ value: "lucide:Coffee", keywords: "coffee" },
+	{ value: "lucide:Cookie", keywords: "cookie" },
+	{ value: "lucide:Diamond", keywords: "diamond gem" },
+	{ value: "lucide:Dices", keywords: "dice game" },
+	{ value: "lucide:Drum", keywords: "drum music" },
+	{ value: "lucide:Flower", keywords: "flower" },
+	{ value: "lucide:Footprints", keywords: "footprints" },
+	{ value: "lucide:Ghost", keywords: "ghost" },
+	{ value: "lucide:Gift", keywords: "gift present" },
+	{ value: "lucide:Grape", keywords: "grape fruit" },
+	{ value: "lucide:Guitar", keywords: "guitar music" },
+	{ value: "lucide:Key", keywords: "key" },
+	{ value: "lucide:Lamp", keywords: "lamp light" },
+	{ value: "lucide:Laugh", keywords: "laugh smile" },
+	{ value: "lucide:Leaf", keywords: "leaf" },
+	{ value: "lucide:Medal", keywords: "medal award" },
+	{ value: "lucide:Mic", keywords: "microphone music" },
+	{ value: "lucide:Moon", keywords: "moon" },
+	{ value: "lucide:Mountain", keywords: "mountain" },
+	{ value: "lucide:Music2", keywords: "music" },
+	{ value: "lucide:Pizza", keywords: "pizza food" },
+	{ value: "lucide:Plane", keywords: "plane airplane" },
+	{ value: "lucide:Rabbit", keywords: "rabbit bunny" },
+	{ value: "lucide:Radio", keywords: "radio music" },
+	{ value: "lucide:Rainbow", keywords: "rainbow" },
+	{ value: "lucide:Rocket", keywords: "rocket space" },
+	{ value: "lucide:Ship", keywords: "ship boat" },
+	{ value: "lucide:Skull", keywords: "skull" },
+	{ value: "lucide:Smile", keywords: "smile happy" },
+	{ value: "lucide:Snowflake", keywords: "snowflake snow" },
+	{ value: "lucide:Sparkle", keywords: "sparkle star" },
+	{ value: "lucide:Sun", keywords: "sun" },
+	{ value: "lucide:Tent", keywords: "tent camping" },
+	{ value: "lucide:TreePine", keywords: "tree pine" },
+	{ value: "lucide:Turtle", keywords: "turtle" },
+	{ value: "lucide:Wand", keywords: "wand magic" },
+	{ value: "lucide:Wine", keywords: "wine drink" },
+];
+
+const EMOJI_AS_PICKER: PickerEntry[] = EMOJI_LIST.map((e) => ({
+	value: e.emoji,
+	keywords: e.keywords,
+}));
+
+/** All picker options: Lucide first (curated), then emojis. */
+const ALL_PICKER_ENTRIES: PickerEntry[] = [...LUCIDE_ENTRIES, ...EMOJI_AS_PICKER];
+
+export const DEFAULT_EMOJI = EMOJI_LIST[0].emoji;
+
+export function getEmojiList(): EmojiEntry[] {
+	return EMOJI_LIST;
+}
+
+export function searchEmojis(query: string): EmojiEntry[] {
+	const q = query.trim().toLowerCase();
+	if (!q) return EMOJI_LIST;
+	return EMOJI_LIST.filter(
+		(entry) =>
+			entry.keywords.includes(q) || entry.emoji === query.trim(),
+	);
+}
+
+/** Search both Lucide and emoji options. Returns unified PickerEntry[]. */
+export function searchPicker(query: string): PickerEntry[] {
+	const q = query.trim().toLowerCase();
+	if (!q) return ALL_PICKER_ENTRIES;
+	return ALL_PICKER_ENTRIES.filter(
+		(entry) =>
+			entry.keywords.includes(q) ||
+			entry.value.toLowerCase().includes(q),
+	);
+}
