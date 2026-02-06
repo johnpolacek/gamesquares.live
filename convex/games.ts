@@ -5,6 +5,7 @@ const quarterValidator = v.object({
 	label: v.string(),
 	rowTeamScore: v.number(),
 	colTeamScore: v.number(),
+	complete: v.optional(v.boolean()),
 });
 
 /**
@@ -21,6 +22,7 @@ export const getCurrentGame = query({
 				name: v.string(),
 				externalId: v.optional(v.string()),
 				quarters: v.array(quarterValidator),
+				gameComplete: v.optional(v.boolean()),
 				updatedAt: v.number(),
 				source: v.union(v.literal("manual"), v.literal("scrape")),
 			}),
@@ -43,6 +45,7 @@ export const getCurrentGame = query({
 				name: game.name,
 				externalId: game.externalId,
 				quarters: game.quarters,
+				gameComplete: game.gameComplete,
 				updatedAt: game.updatedAt,
 				source: game.source,
 			},
@@ -59,6 +62,7 @@ export const setScoresManual = mutation({
 		adminSecret: v.string(),
 		name: v.string(),
 		quarters: v.array(quarterValidator),
+		gameComplete: v.optional(v.boolean()),
 	},
 	returns: v.object({ ok: v.boolean(), error: v.optional(v.string()) }),
 	handler: async (ctx, args) => {
@@ -70,6 +74,7 @@ export const setScoresManual = mutation({
 		await ctx.db.insert("games", {
 			name: args.name,
 			quarters: args.quarters,
+			gameComplete: args.gameComplete,
 			updatedAt: now,
 			source: "manual",
 		});

@@ -12,7 +12,9 @@ type GameInfo = {
 		label: string;
 		rowTeamScore: number;
 		colTeamScore: number;
+		complete?: boolean;
 	}>;
+	gameComplete?: boolean;
 };
 
 type AdminBoardProps = {
@@ -205,11 +207,16 @@ export function AdminBoard({
 							{game.name}
 						</p>
 						<div className="mt-1 flex flex-wrap gap-x-4 text-[10px] text-foreground">
-							{game.quarters.map((q) => (
-								<span key={q.label}>
-									{q.label}: {q.rowTeamScore}–{q.colTeamScore}
-								</span>
-							))}
+							{game.quarters.map((q, idx) => {
+								const isLast = idx === game.quarters.length - 1;
+								const displayLabel =
+									game.gameComplete && isLast ? "FINAL" : q.label;
+								return (
+									<span key={q.label}>
+										{displayLabel}: {q.rowTeamScore}–{q.colTeamScore}
+									</span>
+								);
+							})}
 						</div>
 						<p className="mt-1 text-[10px] text-muted-foreground">
 							Quarter winners highlighted on grid.

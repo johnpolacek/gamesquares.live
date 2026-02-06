@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useState } from "react";
 
 const QUARTERS = ["Q1", "Q2", "Q3", "Q4"] as const;
 
@@ -9,15 +9,22 @@ export default function GlobalScoresAdminPage() {
 	const [secret, setSecret] = useState("");
 	const [name, setName] = useState("Global Game");
 	const [quarters, setQuarters] = useState<
-		Record<string, { rowTeamScore: number; colTeamScore: number }>
+		Record<
+			string,
+			{ rowTeamScore: number; colTeamScore: number; complete: boolean }
+		>
 	>(() =>
 		Object.fromEntries(
-			QUARTERS.map((q) => [q, { rowTeamScore: 0, colTeamScore: 0 }]),
+			QUARTERS.map((q) => [
+				q,
+				{ rowTeamScore: 0, colTeamScore: 0, complete: false },
+			]),
 		),
 	);
-	const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
-		"idle",
-	);
+	const [gameComplete, setGameComplete] = useState(false);
+	const [status, setStatus] = useState<
+		"idle" | "loading" | "success" | "error"
+	>("idle");
 	const [message, setMessage] = useState("");
 
 	async function handleSubmit(e: React.FormEvent) {
@@ -25,17 +32,36 @@ export default function GlobalScoresAdminPage() {
 		setStatus("loading");
 		setMessage("");
 		try {
+			const allQuarters = QUARTERS.map((label) => ({
+				label,
+				rowTeamScore: Number(quarters[label]?.rowTeamScore ?? 0),
+				colTeamScore: Number(quarters[label]?.colTeamScore ?? 0),
+				complete: quarters[label]?.complete ?? false,
+			}));
+
+			// Only include quarters up to the last one with a non-zero score or marked complete.
+			const filteredQuarters = allQuarters.filter((_, i, arr) => {
+				for (let j = arr.length - 1; j >= 0; j--) {
+					if (
+						arr[j].rowTeamScore !== 0 ||
+						arr[j].colTeamScore !== 0 ||
+						arr[j].complete
+					) {
+						return i <= j;
+					}
+				}
+				// All zeros and none complete: include just Q1
+				return i === 0;
+			});
+
 			const res = await fetch("/api/admin/scores", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
 					secret,
 					name: name.trim() || "Global Game",
-					quarters: QUARTERS.map((label) => ({
-						label,
-						rowTeamScore: Number(quarters[label]?.rowTeamScore ?? 0),
-						colTeamScore: Number(quarters[label]?.colTeamScore ?? 0),
-					})),
+					quarters: filteredQuarters,
+					gameComplete,
 				}),
 			});
 			const data = await res.json();
@@ -64,10 +90,6 @@ export default function GlobalScoresAdminPage() {
 						← Home
 					</Link>
 				</div>
-				<p className="text-muted-foreground text-sm">
-					Set quarter scores for the global game. Enter the passcode you
-					configured in Convex (e.g. a number or phrase).
-				</p>
 				<form onSubmit={handleSubmit} className="space-y-6">
 					<div>
 						<label
@@ -112,10 +134,7 @@ export default function GlobalScoresAdminPage() {
 									<span className="w-8 text-sm text-muted-foreground">{q}</span>
 									<div className="flex gap-2">
 										<div>
-											<label
-												htmlFor={`${q}-row`}
-												className="sr-only"
-											>
+											<label htmlFor={`${q}-row`} className="sr-only">
 												Row team score
 											</label>
 											<input
@@ -128,7 +147,8 @@ export default function GlobalScoresAdminPage() {
 														...prev,
 														[q]: {
 															...prev[q],
-															rowTeamScore: parseInt(e.target.value, 10) || 0,
+															rowTeamScore:
+																parseInt(e.target.value, 10) || 0,
 														},
 													}))
 												}
@@ -136,10 +156,7 @@ export default function GlobalScoresAdminPage() {
 											/>
 										</div>
 										<div>
-											<label
-												htmlFor={`${q}-col`}
-												className="sr-only"
-											>
+											<label htmlFor={`${q}-col`} className="sr-only">
 												Col team score
 											</label>
 											<input
@@ -152,7 +169,8 @@ export default function GlobalScoresAdminPage() {
 														...prev,
 														[q]: {
 															...prev[q],
-															colTeamScore: parseInt(e.target.value, 10) || 0,
+															colTeamScore:
+																parseInt(e.target.value, 10) || 0,
 														},
 													}))
 												}
@@ -160,14 +178,53 @@ export default function GlobalScoresAdminPage() {
 											/>
 										</div>
 									</div>
+									<label className="flex items-center gap-1.5 cursor-pointer">
+										<input
+											id={`${q}-complete`}
+											type="checkbox"
+											checked={quarters[q]?.complete ?? false}
+											onChange={(e) =>
+												setQuarters((prev) => ({
+													...prev,
+													[q]: {
+														...prev[q],
+														complete: e.target.checked,
+													},
+												}))
+											}
+											className="h-4 w-4 rounded border-border accent-primary"
+										/>
+										<span className="text-xs text-muted-foreground">Final</span>
+									</label>
 								</div>
 							))}
 						</div>
 						<p className="text-xs text-muted-foreground">
-							Row = first team (e.g. row numbers), Col = second team (e.g. column
-							numbers).
+							Row = first team (e.g. row numbers), Col = second team (e.g.
+							column numbers). Check &quot;Final&quot; when a quarter is
+							complete.
 						</p>
 					</div>
+
+					{/* Game complete toggle */}
+					<label className="flex items-center gap-3 rounded-md border border-border p-3 cursor-pointer">
+						<input
+							id="game-complete"
+							type="checkbox"
+							checked={gameComplete}
+							onChange={(e) => setGameComplete(e.target.checked)}
+							className="h-4 w-4 rounded border-border accent-primary"
+						/>
+						<div>
+							<span className="text-sm font-medium text-foreground">
+								Game Complete
+							</span>
+							<p className="text-xs text-muted-foreground">
+								Mark the entire game as final.
+							</p>
+						</div>
+					</label>
+
 					{message && (
 						<p
 							className={

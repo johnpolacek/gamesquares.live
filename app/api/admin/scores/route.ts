@@ -2,7 +2,12 @@ import { fetchMutation } from "convex/nextjs";
 import { NextResponse } from "next/server";
 import { api } from "@/convex/_generated/api";
 
-type Quarter = { label: string; rowTeamScore: number; colTeamScore: number };
+type Quarter = {
+	label: string;
+	rowTeamScore: number;
+	colTeamScore: number;
+	complete?: boolean;
+};
 
 function parseQuarters(body: unknown): Quarter[] | null {
 	if (!Array.isArray(body)) return null;
@@ -26,6 +31,8 @@ export async function POST(request: Request) {
 		const name =
 			typeof body.name === "string" ? body.name.trim() : "Global Game";
 		const quarters = parseQuarters(body.quarters);
+		const gameComplete =
+			typeof body.gameComplete === "boolean" ? body.gameComplete : undefined;
 
 		if (!secret) {
 			return NextResponse.json(
@@ -44,6 +51,7 @@ export async function POST(request: Request) {
 			adminSecret: secret,
 			name,
 			quarters,
+			gameComplete,
 		});
 
 		if (!result.ok) {

@@ -18,6 +18,34 @@ type SquaresGridProps = {
 	currentScore?: { rowDigit: number; colDigit: number } | null;
 };
 
+// Per-quarter color palette: ring, background tint, badge background
+const QUARTER_COLORS: Record<
+	string,
+	{ ring: string; bg: string; badge: string }
+> = {
+	Q1: {
+		ring: "oklch(0.60 0.20 145)",   // green
+		bg: "oklch(0.60 0.20 145 / 0.12)",
+		badge: "oklch(0.45 0.15 145)",
+	},
+	Q2: {
+		ring: "oklch(0.55 0.20 260)",   // blue
+		bg: "oklch(0.55 0.20 260 / 0.12)",
+		badge: "oklch(0.42 0.15 260)",
+	},
+	Q3: {
+		ring: "oklch(0.60 0.22 25)",    // orange/red
+		bg: "oklch(0.60 0.22 25 / 0.12)",
+		badge: "oklch(0.48 0.18 25)",
+	},
+	Q4: {
+		ring: "oklch(0.65 0.18 85)",    // gold
+		bg: "oklch(0.65 0.18 85 / 0.15)",
+		badge: "oklch(0.50 0.15 85)",
+	},
+};
+const DEFAULT_Q_COLOR = QUARTER_COLORS.Q1;
+
 export function SquaresGrid({
 	pool,
 	onSquareClick,
@@ -28,17 +56,22 @@ export function SquaresGrid({
 	currentScore = null,
 }: SquaresGridProps) {
 	// Map score digits to grid indices via pool.rowNumbers / pool.colNumbers
-	const winningByKey = new Map<string, string>();
+	// Store both the label text and the first (primary) quarter for coloring
+	const winningByKey = new Map<string, { label: string; quarter: string }>();
 	for (const w of winningSquares) {
 		const rowIdx = pool.rowNumbers.indexOf(w.row);
 		const colIdx = pool.colNumbers.indexOf(w.col);
 		if (rowIdx >= 0 && colIdx >= 0) {
 			const k = `${rowIdx},${colIdx}`;
 			const existing = winningByKey.get(k);
-			winningByKey.set(
-				k,
-				existing ? `${existing} ${w.quarterLabel}` : w.quarterLabel,
-			);
+			if (existing) {
+				winningByKey.set(k, {
+					label: `${existing.label} ${w.quarterLabel}`,
+					quarter: existing.quarter, // keep earliest quarter for color
+				});
+			} else {
+				winningByKey.set(k, { label: w.quarterLabel, quarter: w.quarterLabel });
+			}
 		}
 	}
 
@@ -116,37 +149,35 @@ export function SquaresGrid({
 									interactive &&
 									(!isClaimed || (canRelease && isCurrentPlayer));
 								const squareKey = `${square.row},${square.col}`;
-								const quarterWinner = winningByKey.get(squareKey);
+								const winnerInfo = winningByKey.get(squareKey);
 								const isCurrentScoreSquare = currentScoreKey === squareKey;
-
-								// Single background so highlight isn't overridden by bg-white
-								const bgClass = quarterWinner
-									? "bg-[oklch(0.55_0.22_25/0.15)]"
-									: isCurrentScoreSquare
-										? "bg-[oklch(0.75_0.15_85/0.15)]"
-										: isClaimed
-											? "bg-white"
-											: "bg-card";
+								const qColor =
+									winnerInfo
+										? (QUARTER_COLORS[winnerInfo.quarter] ?? DEFAULT_Q_COLOR)
+										: null;
 
 								return (
 									<button
 										key={`${square.row}-${square.col}`}
 										onClick={() => onSquareClick?.(square.row, square.col)}
 										disabled={!canClick}
-										className={`relative flex aspect-square flex-col items-center justify-center gap-0.5 overflow-hidden border-[0.5px] border-border/40 transition-all ${bgClass} ${
+										style={
+											winnerInfo && qColor
+												? { background: qColor.bg, boxShadow: `inset 0 0 0 2px ${qColor.ring}` }
+												: isCurrentScoreSquare
+													? { background: "oklch(0.92 0.12 90 / 0.3)", boxShadow: "inset 0 0 0 2px oklch(0.75 0.12 85)" }
+													: undefined
+										}
+										className={`relative flex aspect-square flex-col items-center justify-center gap-0.5 overflow-hidden border-[0.5px] border-border/40 transition-all ${
+											!winnerInfo && !isCurrentScoreSquare
+												? isClaimed ? "bg-white" : "bg-card"
+												: ""
+										} ${
 											canClick
 												? "cursor-pointer hover:ring-2 hover:ring-border hover:ring-inset active:scale-95"
 												: "cursor-default"
 										} ${isClaimed ? "text-foreground" : ""} ${
 											isCurrentPlayer ? "ring-2 ring-primary ring-inset" : ""
-										} ${
-											quarterWinner
-												? "ring-2 ring-[oklch(0.55_0.22_25)] ring-inset"
-												: ""
-										} ${
-											isCurrentScoreSquare && !quarterWinner
-												? "ring-2 ring-[oklch(0.75_0.15_85)] ring-inset"
-												: ""
 										}`}
 										type="button"
 										aria-label={
@@ -155,12 +186,15 @@ export function SquaresGrid({
 												: `Empty square at row ${square.row + 1}, column ${square.col + 1}`
 										}
 									>
-										{quarterWinner && (
-											<span className="absolute right-0.5 top-0.5 rounded bg-destructive/90 px-1 text-[6px] font-bold text-destructive-foreground">
-												{quarterWinner}
-											</span>
-										)}
-										{isCurrentScoreSquare && !quarterWinner && (
+									{winnerInfo && qColor && (
+										<span
+											className="absolute right-0.5 top-0.5 rounded px-1 text-[6px] font-bold text-white"
+											style={{ background: qColor.badge }}
+										>
+											{winnerInfo.label}
+										</span>
+									)}
+										{isCurrentScoreSquare && !winnerInfo && (
 											<span className="absolute right-0.5 top-0.5 rounded bg-[oklch(0.55_0.15_85)] px-1 text-[6px] font-bold text-white">
 												★
 											</span>

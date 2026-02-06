@@ -260,6 +260,8 @@ export default function PlayPage() {
 		: null;
 
 	// Quarter display with winner/currently-winning player per quarter
+	const isGameComplete =
+		gameData?.found === true && gameData.game.gameComplete === true;
 	const quarterDisplays =
 		gameData?.found === true && numbersAssigned
 			? gameData.game.quarters.map((q, idx) => {
@@ -272,12 +274,14 @@ export default function PlayPage() {
 						colIdx >= 0 &&
 						pool.squares[rowIdx]?.[colIdx]?.claimedBy?.name;
 					const isLatest = idx === gameData.game.quarters.length - 1;
+					const isQuarterComplete = q.complete === true;
 					return {
 						label: q.label,
 						rowTeamScore: q.rowTeamScore,
 						colTeamScore: q.colTeamScore,
 						playerName: playerName ?? null,
 						isLatest,
+						isQuarterComplete,
 					};
 				})
 			: null;
@@ -583,15 +587,27 @@ export default function PlayPage() {
 					<p className="text-xs font-semibold text-muted-foreground">
 						{gameData.game.name}
 					</p>
-					<div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-sm font-medium text-foreground">
+					<div className="mt-1 flex flex-col gap-y-0.5 text-sm font-medium text-foreground">
 						{quarterDisplays
-							? quarterDisplays.map((q) => (
-									<span key={q.label}>
-										{q.label}: {q.rowTeamScore}–{q.colTeamScore}
-										{q.playerName != null &&
-											` (${q.isLatest ? "currently winning" : "winner"}: ${q.playerName})`}
-									</span>
-								))
+							? quarterDisplays.map((q) => {
+									const isFinal = isGameComplete && q.isLatest;
+									const rowWins = isFinal && q.rowTeamScore > q.colTeamScore;
+									const colWins = isFinal && q.colTeamScore > q.rowTeamScore;
+									return (
+										<span key={q.label}>
+											{isFinal ? "FINAL" : q.label}:{" "}
+											<span className={rowWins ? "font-extrabold" : ""}>
+												{q.rowTeamScore}
+											</span>
+											–
+											<span className={colWins ? "font-extrabold" : ""}>
+												{q.colTeamScore}
+											</span>
+											{q.playerName != null &&
+												` (${q.isQuarterComplete || isGameComplete ? "winner" : q.isLatest ? "currently winning" : "winner"}: ${q.playerName})`}
+										</span>
+									);
+								})
 							: gameData.game.quarters.map((q) => (
 									<span key={q.label}>
 										{q.label}: {q.rowTeamScore}–{q.colTeamScore}
