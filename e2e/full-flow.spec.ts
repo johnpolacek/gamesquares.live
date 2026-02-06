@@ -302,6 +302,8 @@ test.describe("Full flow", () => {
 		});
 		await expect(page.getByText(/FINAL: 34–41/)).toBeVisible();
 
+		await page.pause();
+
 		await ctx1.close();
 		await ctx2.close();
 		await ctx3.close();
