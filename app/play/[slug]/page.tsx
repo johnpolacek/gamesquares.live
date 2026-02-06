@@ -189,7 +189,7 @@ export default function PlayPage() {
 		return (
 			<main className="flex min-h-dvh flex-col items-center justify-center px-6 py-12 bg-background">
 				<div className="flex flex-col items-center gap-6 text-center max-w-md">
-					<h1 className="text-2xl font-bold">Pool Not Found</h1>
+					<h1 data-testid="play-not-found-heading" className="text-2xl font-bold">Pool Not Found</h1>
 					<p className="text-muted-foreground">
 						This pool doesn&apos;t exist or may have been removed.
 					</p>
@@ -325,6 +325,7 @@ export default function PlayPage() {
 								</label>
 								<input
 									id="player-name"
+									data-testid="play-player-name"
 									type="text"
 									value={playerName}
 									onChange={(e) => setPlayerName(e.target.value)}
@@ -402,6 +403,7 @@ export default function PlayPage() {
 							</div>
 
 							<button
+								data-testid="play-join-button"
 								onClick={handleJoin}
 								disabled={playerName.trim().length === 0 || isJoining}
 								className="w-full rounded-lg bg-primary px-6 py-4 text-base font-semibold text-primary-foreground shadow-sm transition-all active:scale-[0.98] disabled:opacity-40 disabled:active:scale-100"

@@ -114,7 +114,7 @@ export function LandingHero() {
 			<main className="flex min-h-dvh flex-col items-center justify-center px-6 py-12">
 				<div className="flex w-full max-w-md flex-col gap-8 text-center">
 					<div className="flex flex-col gap-2">
-						<h2 className="font-mono text-xl font-bold text-foreground">
+						<h2 data-testid="landing-success-heading" className="font-mono text-xl font-bold text-foreground">
 							Check your email
 						</h2>
 						<p className="text-sm text-muted-foreground">
@@ -305,6 +305,7 @@ export function LandingHero() {
 					)}
 
 					<button
+						data-testid="landing-create-pool-submit"
 						onClick={handleCreatePool}
 						disabled={loading}
 						className="w-full rounded-lg bg-primary px-6 py-4 text-base font-semibold text-primary-foreground shadow-sm transition-all active:scale-[0.98] disabled:opacity-60 disabled:active:scale-100"
@@ -374,6 +375,7 @@ export function LandingHero() {
 				</div>
 
 				<button
+					data-testid="landing-create-pool-cta"
 					onClick={() => setStep("configure")}
 					className="flex justify-center items-center gap-2 rounded-lg bg-primary px-6 py-4 text-xl font-semibold text-primary-foreground shadow-sm transition-all active:scale-[0.98]"
 					type="button"
