@@ -1,16 +1,80 @@
 "use client";
 
 import { useQuery } from "convex/react";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { api } from "@/convex/_generated/api";
+import {
+	type PoolHistoryEntry,
+	addPoolToHistory,
+	getPoolHistory,
+	removePoolFromHistory,
+} from "@/lib/pool-history";
 
 const squareOptions = [1, 2, 4, 5, 10];
 const CREATED_AT_KEY = "gamesquares_pool_created_at";
 const DEV_POOL_LINK_KEY = "gamesquares_dev_pool_link";
 const COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes
+
+function YourPools({
+	pools,
+	onRemove,
+}: {
+	pools: PoolHistoryEntry[];
+	onRemove: (slug: string, role: "admin" | "player") => void;
+}) {
+	if (pools.length === 0) return null;
+	return (
+		<section className="w-full max-w-md opacity-0 animate-fade-in-up">
+			<h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+				Your Pools
+			</h3>
+			<div className="flex flex-col gap-2">
+				{pools.map((entry) => (
+					<div
+						key={`${entry.slug}-${entry.role}`}
+						className="group flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:bg-accent/50"
+					>
+						<div className="flex-1 min-w-0">
+							<p className="truncate text-sm font-medium text-foreground">
+								{entry.title}
+							</p>
+							<p className="text-xs text-muted-foreground">
+								{entry.role === "admin" ? "Admin" : "Player"}
+							</p>
+						</div>
+						<div className="flex items-center gap-2">
+							<Link
+								href={`/play/${entry.slug}`}
+								className="rounded-md bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
+							>
+								Play
+							</Link>
+							{entry.role === "admin" && (
+								<Link
+									href={`/go/${entry.slug}`}
+									className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+								>
+									Manage
+								</Link>
+							)}
+							<button
+								type="button"
+								onClick={() => onRemove(entry.slug, entry.role)}
+								className="rounded-md p-1 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground"
+								aria-label={`Remove ${entry.title}`}
+							>
+								<XIcon className="h-3.5 w-3.5" />
+							</button>
+						</div>
+					</div>
+				))}
+			</div>
+		</section>
+	);
+}
 
 function FooterLinks() {
 	return (
@@ -40,6 +104,7 @@ export function LandingHero() {
 	const [step, setStep] = useState<"hero" | "configure" | "success">("hero");
 	const [createdAt, setCreatedAt] = useState<number | null>(null);
 	const [devPoolLink, setDevPoolLink] = useState<string | null>(null);
+	const [poolHistory, setPoolHistory] = useState<PoolHistoryEntry[]>([]);
 	const [title, setTitle] = useState("");
 	const [adminEmail, setAdminEmail] = useState("");
 	const [squaresPerPerson, setSquaresPerPerson] = useState(5);
@@ -60,6 +125,7 @@ export function LandingHero() {
 		}
 		const link = localStorage.getItem(DEV_POOL_LINK_KEY);
 		if (link) setDevPoolLink(link);
+		setPoolHistory(getPoolHistory());
 		if (process.env.NODE_ENV === "development") {
 			console.log("[LandingHero] localStorage on mount:", {
 				CREATED_AT_KEY: raw,
@@ -127,6 +193,17 @@ export function LandingHero() {
 					setDevPoolLink(data.poolLink);
 				}
 			}
+			// Save to pool history so returning users see their pool on the homepage
+			if (data.slug) {
+				const entry: PoolHistoryEntry = {
+					slug: data.slug,
+					title: trimmedTitle,
+					role: "admin",
+					joinedAt: now,
+				};
+				addPoolToHistory(entry);
+				setPoolHistory(getPoolHistory());
+			}
 			setCreatedAt(now);
 			if (data.poolLink) setDevPoolLink(data.poolLink);
 			setStep("success");
@@ -147,6 +224,11 @@ export function LandingHero() {
 		setStep("hero");
 	};
 
+	const handleRemovePool = (slug: string, role: "admin" | "player") => {
+		removePoolFromHistory(slug, role);
+		setPoolHistory(getPoolHistory());
+	};
+
 	// Success: show pool link only if API returned it (e.g. in development)
 	if (step === "success") {
 		return (
@@ -164,6 +246,7 @@ export function LandingHero() {
 							pool.
 						</p>
 					</div>
+					<YourPools pools={poolHistory} onRemove={handleRemovePool} />
 					<FooterLinks />
 					{devPoolLink && (
 						<div className="rounded-lg mt-8 border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-left">
@@ -209,6 +292,7 @@ export function LandingHero() {
 							<PlusIcon className="w-4 h-4" /> Create another pool
 						</button>
 					)}
+					<YourPools pools={poolHistory} onRemove={handleRemovePool} />
 					<FooterLinks />
 					{devPoolLink && (
 						<div className="rounded-lg border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-left mt-8">
@@ -458,6 +542,11 @@ export function LandingHero() {
 						{" "}
 						{poolCount === 1 ? "pool" : "pools"} created
 					</p>
+				)}
+				{poolHistory.length > 0 && (
+					<div className="opacity-0 animate-fade-in-up animate-delay-3">
+						<YourPools pools={poolHistory} onRemove={handleRemovePool} />
+					</div>
 				)}
 				<div className="opacity-0 animate-fade-in-up animate-delay-4">
 					<FooterLinks />

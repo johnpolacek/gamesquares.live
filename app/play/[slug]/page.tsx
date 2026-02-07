@@ -14,6 +14,7 @@ import {
 	getPlayerSquareCount,
 	isBoardFull,
 } from "@/lib/pool-store";
+import { addPoolToHistory } from "@/lib/pool-history";
 import type { PlayerIdentity } from "@/lib/types";
 
 const PARTICIPANT_KEY_PREFIX = "gamesquares_participant_";
@@ -82,6 +83,14 @@ export default function PlayPage() {
 			const key = `${PARTICIPANT_KEY_PREFIX}${slug}`;
 			localStorage.setItem(key, JSON.stringify(participant));
 			setStoredParticipant(participant);
+
+			// Save to pool history so homepage can show a link back
+			addPoolToHistory({
+				slug,
+				title: poolData.pool.title,
+				role: "player",
+				joinedAt: Date.now(),
+			});
 		} catch (err) {
 			console.error("Join error:", err);
 			alert("Failed to join pool. Please try again.");
