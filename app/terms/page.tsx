@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function TermsOfUsePage() {
 	return (
 		<main className="min-h-dvh bg-background px-6 py-12">
-			<div className="mx-auto max-w-2xl space-y-8">
+			<div className="mx-auto max-w-2xl space-y-8 opacity-0 animate-fade-in-up">
 				<div className="flex items-center justify-between">
 					<h1 className="text-2xl font-bold text-foreground">Terms of Use</h1>
 					<Link

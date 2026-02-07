@@ -85,7 +85,7 @@ export function SquaresGrid({
 		}
 	}
 	return (
-		<div className="mx-auto w-full max-w-lg">
+		<div className="mx-auto w-full max-w-lg opacity-0 animate-fade-in-up">
 			{/* Patriots label above column headers */}
 			<div className="flex items-center justify-center pb-1 pl-5">
 				<div className="flex items-center gap-1.5">
@@ -173,7 +173,7 @@ export function SquaresGrid({
 														}
 													: undefined
 										}
-										className={`relative flex aspect-square flex-col items-center justify-center gap-0.5 overflow-hidden border-[0.5px] border-border/40 transition-all ${
+										className={`relative flex aspect-square flex-col items-center justify-center gap-0.5 overflow-hidden border-[0.5px] border-border/40 transition-all duration-200 ease-out ${
 											!winnerInfo && !isCurrentScoreSquare
 												? isClaimed
 													? "bg-white"
@@ -181,7 +181,7 @@ export function SquaresGrid({
 												: ""
 										} ${
 											canClick
-												? "cursor-pointer hover:ring-2 hover:ring-border hover:ring-inset active:scale-95"
+												? "cursor-pointer hover:ring-2 hover:ring-border hover:ring-inset hover:scale-[1.02] active:scale-95"
 												: "cursor-default"
 										} ${isClaimed ? "text-foreground" : ""} ${
 											isCurrentPlayer ? "ring-2 ring-primary ring-inset" : ""

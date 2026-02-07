@@ -127,6 +127,7 @@
 	--color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* Remotion-inspired timing: ease-out for entrances, ~250–350ms (smooth, no bounce) */
 @layer base {
 	* {
 		@apply border-border outline-ring/50;
@@ -140,5 +141,28 @@
 	[type="reset"] {
 		@apply cursor-pointer;
 	}
+}
+
+@layer utilities {
+	/* Subtle entrance: fade + slide up with ease-out (Remotion-style) */
+	@keyframes fade-in-up {
+		from {
+			opacity: 0;
+			transform: translateY(8px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+	.animate-fade-in-up {
+		animation: fade-in-up 0.3s cubic-bezier(0.33, 1, 0.68, 1) both;
+	}
+	/* Stagger delays for sequenced entrances (both = backwards during delay) */
+	.animate-delay-1 { animation-delay: 60ms; }
+	.animate-delay-2 { animation-delay: 120ms; }
+	.animate-delay-3 { animation-delay: 180ms; }
+	.animate-delay-4 { animation-delay: 240ms; }
+	.animate-delay-5 { animation-delay: 300ms; }
 }
 

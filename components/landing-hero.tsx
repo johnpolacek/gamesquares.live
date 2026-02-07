@@ -127,7 +127,7 @@ export function LandingHero() {
 	if (step === "success") {
 		return (
 			<main className="flex min-h-dvh flex-col items-center justify-center px-6 py-12">
-				<div className="flex w-full max-w-md flex-col gap-8 text-center">
+				<div className="flex w-full max-w-md flex-col gap-8 text-center opacity-0 animate-fade-in-up">
 					<div className="flex flex-col gap-2">
 						<h2
 							data-testid="landing-success-heading"
@@ -166,7 +166,7 @@ export function LandingHero() {
 	if (createdAt !== null && step === "hero") {
 		return (
 			<main className="flex min-h-dvh flex-col items-center justify-center px-6 py-12">
-				<div className="flex w-full max-w-md flex-col gap-8 text-center">
+				<div className="flex w-full max-w-md flex-col gap-8 text-center opacity-0 animate-fade-in-up">
 					<div className="flex flex-col gap-2">
 						<h2 className="font-mono text-xl text-balance font-bold text-foreground">
 							You already created a GameSquares pool
@@ -210,7 +210,7 @@ export function LandingHero() {
 	if (step === "configure") {
 		return (
 			<main className="flex min-h-dvh flex-col items-center justify-center px-6 py-12">
-				<div className="flex w-full max-w-md flex-col gap-8">
+				<div className="flex w-full max-w-md flex-col gap-8 opacity-0 animate-fade-in-up">
 					<button
 						onClick={() => setStep("hero")}
 						className="flex items-center gap-1 self-start text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -342,7 +342,7 @@ export function LandingHero() {
 	return (
 		<main className="flex min-h-dvh flex-col items-center justify-center px-6 py-12">
 			<div className="flex w-full max-w-md flex-col items-center gap-10 text-center">
-				<div className="flex flex-col items-center gap-3">
+				<div className="flex flex-col items-center gap-3 opacity-0 animate-fade-in-up">
 					<div className="flex items-center gap-2 relative -top-8">
 						<svg
 							width="32"
@@ -398,16 +398,18 @@ export function LandingHero() {
 				<button
 					data-testid="landing-create-pool-cta"
 					onClick={() => setStep("configure")}
-					className="flex justify-center items-center gap-2 rounded-lg bg-primary px-6 py-4 text-xl font-semibold text-primary-foreground shadow-sm transition-all active:scale-[0.98]"
+					className="flex justify-center items-center gap-2 rounded-lg bg-primary px-6 py-4 text-xl font-semibold text-primary-foreground shadow-sm transition-all active:scale-[0.98] opacity-0 animate-fade-in-up animate-delay-1"
 					type="button"
 				>
 					<PlusIcon className="w-6 h-6" /> Create GameSquares Pool
 				</button>
 
-				<p className="text-sm text-muted-foreground">
+				<p className="text-sm text-muted-foreground opacity-0 animate-fade-in-up animate-delay-2">
 					No account needed. Create and share in seconds.
 				</p>
-				<FooterLinks />
+				<div className="opacity-0 animate-fade-in-up animate-delay-3">
+					<FooterLinks />
+				</div>
 			</div>
 		</main>
 	);
