@@ -2,9 +2,9 @@
 
 import { useQuery } from "convex/react";
 import { useParams } from "next/navigation";
-import { useRef, useState, useEffect, useCallback } from "react";
-import { SquaresGrid } from "@/components/squares-grid";
+import { useEffect, useRef, useState } from "react";
 import { GraphicIcon } from "@/components/graphic-icon";
+import { SquaresGrid } from "@/components/squares-grid";
 import { api } from "@/convex/_generated/api";
 import { transformToPool } from "@/lib/convex-to-pool";
 
@@ -22,7 +22,11 @@ type Quarter = {
 function findSquareOwner(
 	rowDigit: number,
 	colDigit: number,
-	pool: { rowNumbers: (number | null)[]; colNumbers: (number | null)[]; squares: { claimedBy: { name: string } | null }[][] },
+	pool: {
+		rowNumbers: (number | null)[];
+		colNumbers: (number | null)[];
+		squares: { claimedBy: { name: string } | null }[][];
+	},
 ): string | null {
 	const rowIdx = pool.rowNumbers.indexOf(rowDigit);
 	const colIdx = pool.colNumbers.indexOf(colDigit);
@@ -46,9 +50,17 @@ type WhatIfScenario = {
 function computeWhatIfs(
 	currentRowScore: number,
 	currentColScore: number,
-	pool: { rowNumbers: (number | null)[]; colNumbers: (number | null)[]; squares: { claimedBy: { name: string } | null }[][] },
+	pool: {
+		rowNumbers: (number | null)[];
+		colNumbers: (number | null)[];
+		squares: { claimedBy: { name: string } | null }[][];
+	},
 ): WhatIfScenario[] {
-	const scenarios: { label: string; teamSide: "row" | "col"; points: number }[] = [
+	const scenarios: {
+		label: string;
+		teamSide: "row" | "col";
+		points: number;
+	}[] = [
 		{ label: "Eagles FG", teamSide: "row", points: 3 },
 		{ label: "Eagles TD", teamSide: "row", points: 7 },
 		{ label: "Patriots FG", teamSide: "col", points: 3 },
@@ -56,8 +68,10 @@ function computeWhatIfs(
 	];
 
 	return scenarios.map((s) => {
-		const newRowScore = s.teamSide === "row" ? currentRowScore + s.points : currentRowScore;
-		const newColScore = s.teamSide === "col" ? currentColScore + s.points : currentColScore;
+		const newRowScore =
+			s.teamSide === "row" ? currentRowScore + s.points : currentRowScore;
+		const newColScore =
+			s.teamSide === "col" ? currentColScore + s.points : currentColScore;
 		const rowDigit = newRowScore % 10;
 		const colDigit = newColScore % 10;
 		const playerName = findSquareOwner(rowDigit, colDigit, pool);
@@ -77,28 +91,37 @@ export default function ViewPage() {
 	const gridRef = useRef<HTMLDivElement>(null);
 	const [gridScale, setGridScale] = useState(1);
 
-	const recalcScale = useCallback(() => {
+	// Re-run when poolData/gameData change (grid may not be in DOM until data loads)
+	const dataReady = poolData?.found === true;
+
+	useEffect(() => {
+		if (!dataReady) return;
 		const container = containerRef.current;
 		const grid = gridRef.current;
 		if (!container || !grid) return;
-		const cw = container.clientWidth;
-		const ch = container.clientHeight;
-		// The grid's natural size (unscaled)
-		const gw = grid.scrollWidth;
-		const gh = grid.scrollHeight;
-		if (gw === 0 || gh === 0) return;
-		const scale = Math.min(cw / gw, ch / gh);
-		setGridScale(scale);
-	}, []);
 
-	useEffect(() => {
-		recalcScale();
-		const container = containerRef.current;
-		if (!container) return;
-		const ro = new ResizeObserver(() => recalcScale());
-		ro.observe(container);
+		const gridEl = grid;
+		const containerEl = container;
+
+		function recalc() {
+			// Reset scale to 1 so we can measure the grid's natural size
+			gridEl.style.transform = "scale(1)";
+			const gw = gridEl.offsetWidth;
+			const gh = gridEl.offsetHeight;
+			const cw = containerEl.clientWidth;
+			const ch = containerEl.clientHeight;
+			if (gw === 0 || gh === 0) return;
+			// Scale to fit with a little breathing room at the edges
+			const scale = Math.min(cw / gw, ch / gh) * 0.92;
+			setGridScale(scale);
+			gridEl.style.transform = `scale(${scale})`;
+		}
+
+		recalc();
+		const ro = new ResizeObserver(() => recalc());
+		ro.observe(containerEl);
 		return () => ro.disconnect();
-	}, [recalcScale]);
+	}, [dataReady]);
 
 	// Loading
 	if (poolData === undefined) {
@@ -139,7 +162,8 @@ export default function ViewPage() {
 	const hasGame = gameData?.found === true;
 	const game = hasGame ? gameData.game : null;
 	const quarters: Quarter[] = game?.quarters ?? [];
-	const latestQuarter = quarters.length > 0 ? quarters[quarters.length - 1] : null;
+	const latestQuarter =
+		quarters.length > 0 ? quarters[quarters.length - 1] : null;
 	const isGameComplete = game?.gameComplete === true;
 
 	// Current scores
@@ -207,10 +231,42 @@ export default function ViewPage() {
 						className="text-emerald-500"
 						aria-hidden="true"
 					>
-						<rect x="2" y="2" width="12" height="12" rx="2" fill="currentColor" opacity="0.9" />
-						<rect x="18" y="2" width="12" height="12" rx="2" fill="currentColor" opacity="0.6" />
-						<rect x="2" y="18" width="12" height="12" rx="2" fill="currentColor" opacity="0.6" />
-						<rect x="18" y="18" width="12" height="12" rx="2" fill="currentColor" opacity="0.3" />
+						<rect
+							x="2"
+							y="2"
+							width="12"
+							height="12"
+							rx="2"
+							fill="currentColor"
+							opacity="0.9"
+						/>
+						<rect
+							x="18"
+							y="2"
+							width="12"
+							height="12"
+							rx="2"
+							fill="currentColor"
+							opacity="0.6"
+						/>
+						<rect
+							x="2"
+							y="18"
+							width="12"
+							height="12"
+							rx="2"
+							fill="currentColor"
+							opacity="0.6"
+						/>
+						<rect
+							x="18"
+							y="18"
+							width="12"
+							height="12"
+							rx="2"
+							fill="currentColor"
+							opacity="0.3"
+						/>
 					</svg>
 					<span className="text-lg font-bold text-foreground/70 tracking-wide">
 						GameSquares<span className="text-emerald-500">.live</span>
@@ -237,11 +293,18 @@ export default function ViewPage() {
 
 			{/* Main content */}
 			<div className="flex flex-1 min-h-0">
-				{/* Left side: Grid - scaled to fill available space */}
-				<div ref={containerRef} className="flex flex-1 items-center justify-center overflow-hidden min-w-0 p-8">
+				{/* Left side: Grid - scaled to fill available space with breathing room */}
+				<div
+					ref={containerRef}
+					className="flex flex-1 items-center justify-center overflow-hidden min-w-0"
+				>
 					<div
 						ref={gridRef}
-						style={{ transform: `scale(${gridScale})`, transformOrigin: "center center" }}
+						className="w-fit"
+						style={{
+							transform: `scale(${gridScale})`,
+							transformOrigin: "center center",
+						}}
 					>
 						<SquaresGrid
 							pool={pool}
@@ -253,40 +316,48 @@ export default function ViewPage() {
 				</div>
 
 				{/* Right side: Scoreboard info */}
-				<div className="flex w-96 shrink-0 flex-col gap-4 overflow-y-auto border-l border-border bg-muted/30 p-5">
+				<div className="flex w-[420px] shrink-0 flex-col gap-5 overflow-y-auto border-l border-border bg-white/50 p-6">
 					{/* Current score */}
 					{hasGame && (
 						<div data-testid="view-score-bar">
-							<h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+							<h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">
 								Score
 							</h3>
-							<div className="flex items-center justify-center gap-5 rounded-lg bg-white p-4 ring-1 ring-border">
+							<div className="flex items-center justify-center gap-6 rounded-lg bg-white p-5 ring-1 ring-border">
 								<div className="flex flex-col items-center">
-									<span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">
+									<span className="text-xs font-bold uppercase tracking-wider text-emerald-600">
 										Eagles
 									</span>
-									<span className="text-4xl font-black tabular-nums text-foreground" data-testid="view-eagles-score">
+									<span
+										className="text-5xl font-black tabular-nums text-foreground"
+										data-testid="view-eagles-score"
+									>
 										{currentRowScore}
 									</span>
 								</div>
 								<div className="flex flex-col items-center">
-									<span className="text-sm font-bold text-muted-foreground/40">vs</span>
+									<span className="text-base font-bold text-muted-foreground/40">
+										vs
+									</span>
 									{latestQuarter && !isGameComplete && (
-										<span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+										<span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
 											{latestQuarter.label}
 										</span>
 									)}
 									{isGameComplete && (
-										<span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
+										<span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">
 											Final
 										</span>
 									)}
 								</div>
 								<div className="flex flex-col items-center">
-									<span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">
+									<span className="text-xs font-bold uppercase tracking-wider text-blue-600">
 										Patriots
 									</span>
-									<span className="text-4xl font-black tabular-nums text-foreground" data-testid="view-patriots-score">
+									<span
+										className="text-5xl font-black tabular-nums text-foreground"
+										data-testid="view-patriots-score"
+									>
 										{currentColScore}
 									</span>
 								</div>
@@ -297,10 +368,10 @@ export default function ViewPage() {
 					{/* Quarter scores */}
 					{quarterDisplays.length > 0 && (
 						<div data-testid="view-quarter-scores">
-							<h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+							<h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">
 								Scoring
 							</h3>
-							<div className="flex flex-col gap-2">
+							<div className="flex flex-col gap-2.5">
 								{quarterDisplays.map((q) => {
 									const isFinal = isGameComplete && q.isLatest;
 									const eaglesWinning = q.rowTeamScore > q.colTeamScore;
@@ -308,19 +379,19 @@ export default function ViewPage() {
 									return (
 										<div
 											key={q.label}
-											className={`rounded-lg p-3 ${
+											className={`rounded-lg p-3.5 ${
 												q.isLatest && !isGameComplete
 													? "bg-emerald-500/10 ring-1 ring-emerald-500/30"
 													: "bg-white ring-1 ring-border"
 											}`}
 										>
 											<div className="flex items-center justify-between">
-												<span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
+												<span className="text-sm font-bold text-muted-foreground uppercase tracking-wide">
 													{isFinal ? "FINAL" : q.label}
 												</span>
 												{q.playerName && (
 													<span
-														className={`text-[10px] font-bold uppercase tracking-wider ${
+														className={`text-xs font-bold uppercase tracking-wider ${
 															q.isComplete || isGameComplete
 																? "text-emerald-600"
 																: "text-yellow-500"
@@ -332,24 +403,28 @@ export default function ViewPage() {
 													</span>
 												)}
 											</div>
-											<div className="mt-1 flex items-baseline gap-2">
+											<div className="mt-1.5 flex items-baseline gap-2">
 												<span
-													className={`text-lg font-bold tabular-nums ${
-														eaglesWinning ? "text-emerald-600" : "text-foreground"
+													className={`text-xl font-bold tabular-nums ${
+														eaglesWinning
+															? "text-emerald-600"
+															: "text-foreground"
 													}`}
 												>
 													{q.rowTeamScore}
 												</span>
 												<span className="text-muted-foreground/40">-</span>
 												<span
-													className={`text-lg font-bold tabular-nums ${
-														patriotsWinning ? "text-blue-600" : "text-foreground"
+													className={`text-xl font-bold tabular-nums ${
+														patriotsWinning
+															? "text-blue-600"
+															: "text-foreground"
 													}`}
 												>
 													{q.colTeamScore}
 												</span>
 												{q.playerName && (
-													<span className="ml-auto text-sm font-bold text-foreground truncate max-w-[120px]">
+													<span className="ml-auto text-base font-bold text-foreground truncate max-w-[140px]">
 														{q.playerName}
 													</span>
 												)}
@@ -364,25 +439,25 @@ export default function ViewPage() {
 					{/* What-If Scenarios */}
 					{whatIfs.length > 0 && (
 						<div data-testid="view-what-if">
-							<h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+							<h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">
 								Next Score Wins
 							</h3>
-							<div className="grid grid-cols-2 gap-2">
+							<div className="grid grid-cols-2 gap-2.5">
 								{whatIfs.map((s) => (
 									<div
 										key={s.label}
-										className={`rounded-lg p-3 ${
+										className={`rounded-lg p-3.5 ${
 											s.teamSide === "row"
 												? "bg-emerald-500/8 ring-1 ring-emerald-500/20"
 												: "bg-blue-500/8 ring-1 ring-blue-500/20"
 										}`}
 									>
 										<div className="flex items-center gap-1.5">
-											<span className="text-lg">
+											<span className="text-xl">
 												{s.points === 3 ? "🏈" : "🏈"}
 											</span>
 											<span
-												className={`text-[10px] font-bold uppercase tracking-wider ${
+												className={`text-xs font-bold uppercase tracking-wider ${
 													s.teamSide === "row"
 														? "text-emerald-600"
 														: "text-blue-600"
@@ -391,10 +466,10 @@ export default function ViewPage() {
 												{s.label}
 											</span>
 										</div>
-										<div className="mt-1 text-xs font-semibold text-muted-foreground tabular-nums">
+										<div className="mt-1.5 text-sm font-semibold text-muted-foreground tabular-nums">
 											{s.newRowScore} - {s.newColScore}
 										</div>
-										<div className="mt-1.5 text-sm font-bold text-foreground truncate">
+										<div className="mt-2 text-base font-bold text-foreground truncate">
 											{s.playerName ?? (
 												<span className="text-muted-foreground/40 font-normal italic">
 													Unclaimed
@@ -410,24 +485,24 @@ export default function ViewPage() {
 					{/* Players */}
 					{Object.keys(pool.players).length > 0 && (
 						<div>
-							<h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+							<h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">
 								Players
 							</h3>
-							<div className="flex flex-wrap gap-1.5">
+							<div className="flex flex-wrap gap-2">
 								{Object.entries(pool.players).map(([name, player]) => (
 									<div
 										key={name}
-										className="flex items-center gap-1 rounded-full bg-white px-2.5 py-1 ring-1 ring-border"
+										className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 ring-1 ring-border"
 									>
 										<GraphicIcon
 											graphic={player.identity.graphic}
-											className="text-sm leading-none"
-											size={14}
+											className="text-base leading-none"
+											size={16}
 										/>
-										<span className="text-[11px] font-semibold text-foreground/80">
+										<span className="text-sm font-semibold text-foreground/80">
 											{name}
 										</span>
-										<span className="text-[10px] font-bold text-muted-foreground">
+										<span className="text-xs font-bold text-muted-foreground">
 											{player.count}
 										</span>
 									</div>
@@ -439,19 +514,19 @@ export default function ViewPage() {
 					{/* No game started yet */}
 					{!hasGame && (
 						<div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
-							<span className="text-3xl">🏈</span>
-							<p className="text-sm font-medium text-muted-foreground">
+							<span className="text-4xl">🏈</span>
+							<p className="text-base font-medium text-muted-foreground">
 								Waiting for the game to start...
 							</p>
-							<p className="text-xs text-muted-foreground/60">
+							<p className="text-sm text-muted-foreground/60">
 								Scores will update in realtime once the admin sets them.
 							</p>
 						</div>
 					)}
 
 					{!numbersAssigned && hasGame && (
-						<div className="rounded-lg bg-yellow-500/10 p-3 ring-1 ring-yellow-500/30">
-							<p className="text-xs font-medium text-yellow-600">
+						<div className="rounded-lg bg-yellow-500/10 p-4 ring-1 ring-yellow-500/30">
+							<p className="text-sm font-medium text-yellow-600">
 								Numbers have not been assigned yet. Waiting for admin.
 							</p>
 						</div>
