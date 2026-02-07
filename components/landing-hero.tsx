@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { PlusIcon } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 const squareOptions = [1, 2, 4, 5, 10];
@@ -11,14 +11,22 @@ const COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes
 
 function FooterLinks() {
 	return (
-		<footer className="flex justify-center gap-4 pt-8 text-xs text-muted-foreground">
-			<Link href="/privacy" className="hover:text-foreground underline">
-				Privacy Policy
+		<footer className="flex flex-col items-center gap-8 pt-8">
+			<Link
+				href="/demo"
+				className="text-xl font-light text-primary border-b-2 border-primary/50 hover:border-primary/90 border-dotted transition-colors hover:text-primary/90"
+			>
+				See how it works
 			</Link>
-			<span>&middot;</span>
-			<Link href="/terms" className="hover:text-foreground underline">
-				Terms of Use
-			</Link>
+			<div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+				<Link href="/privacy" className="hover:text-foreground underline">
+					Privacy Policy
+				</Link>
+				<span>&middot;</span>
+				<Link href="/terms" className="hover:text-foreground underline">
+					Terms of Use
+				</Link>
+			</div>
 		</footer>
 	);
 }
@@ -140,8 +148,9 @@ export function LandingHero() {
 							pool.
 						</p>
 					</div>
+					<FooterLinks />
 					{devPoolLink && (
-						<div className="rounded-lg border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-left">
+						<div className="rounded-lg mt-8 border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-left">
 							<p className="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
 								Dev bypass
 							</p>
@@ -156,7 +165,6 @@ export function LandingHero() {
 							</a>
 						</div>
 					)}
-					<FooterLinks />
 				</div>
 			</main>
 		);
@@ -176,8 +184,18 @@ export function LandingHero() {
 							players.
 						</p>
 					</div>
+					{canCreateNew && (
+						<button
+							onClick={handleCreateNewPool}
+							className="flex gap-2 items-center justify-center w-full rounded-lg bg-primary px-6 py-4 text-lg font-semibold text-primary-foreground shadow-sm transition-all active:scale-[0.98]"
+							type="button"
+						>
+							<PlusIcon className="w-4 h-4" /> Create another pool
+						</button>
+					)}
+					<FooterLinks />
 					{devPoolLink && (
-						<div className="rounded-lg border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-left">
+						<div className="rounded-lg border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-left mt-8">
 							<p className="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
 								Dev bypass
 							</p>
@@ -192,16 +210,6 @@ export function LandingHero() {
 							</a>
 						</div>
 					)}
-					{canCreateNew && (
-						<button
-							onClick={handleCreateNewPool}
-							className="w-full rounded-lg bg-primary px-6 py-4 text-base font-semibold text-primary-foreground shadow-sm transition-all active:scale-[0.98]"
-							type="button"
-						>
-							Create another pool
-						</button>
-					)}
-					<FooterLinks />
 				</div>
 			</main>
 		);
@@ -334,6 +342,22 @@ export function LandingHero() {
 						{loading ? "Creating…" : "Create Pool"}
 					</button>
 					<FooterLinks />
+					{devPoolLink && (
+						<div className="rounded-lg border border-amber-500/50 bg-amber-500/10 px-4 py-3 mt-8 text-left">
+							<p className="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+								Dev bypass
+							</p>
+							<p className="mt-1 text-sm text-muted-foreground">
+								Admin link is in the server terminal. Open pool:
+							</p>
+							<a
+								href={devPoolLink}
+								className="mt-2 block truncate text-sm font-medium text-primary underline"
+							>
+								{devPoolLink}
+							</a>
+						</div>
+					)}
 				</div>
 			</main>
 		);
