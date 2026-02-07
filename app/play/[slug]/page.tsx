@@ -347,8 +347,8 @@ export default function PlayPage() {
 					<div className="w-full rounded-lg bg-card p-4 ring-1 ring-border">
 						<div className="flex items-center justify-between">
 							<span className="text-sm text-muted-foreground">Pool</span>
-							<span className="font-mono text-sm font-bold text-foreground">
-								{pool.id}
+							<span className="text-sm font-bold text-foreground text-right max-w-[70%] truncate" title={poolData.pool.title}>
+								{poolData.pool.title}
 							</span>
 						</div>
 						<div className="my-2.5 h-px bg-border" />

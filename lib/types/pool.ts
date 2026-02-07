@@ -35,6 +35,8 @@ export type Pool = {
 export const ROUTES = {
 	/** Public pool page: /play/{slug} */
 	PLAY_PREFIX: "/play/",
+	/** Read-only view: /view/{slug} */
+	VIEW_PREFIX: "/view/",
 	/** Admin magic link: /go/?token=... */
 	ADMIN_LOGIN_PREFIX: "/go/",
 } as const;

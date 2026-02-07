@@ -36,6 +36,8 @@ export function AdminBoard({
 	currentScore = null,
 }: AdminBoardProps) {
 	const [copied, setCopied] = useState(false);
+	const [copiedView, setCopiedView] = useState(false);
+	const viewUrl = shareUrl.replace(/\/play\//, "/view/");
 	const [maxError, setMaxError] = useState<string | null>(null);
 	const [isAssigning, setIsAssigning] = useState(false);
 	const [isDistributing, setIsDistributing] = useState(false);
@@ -61,6 +63,23 @@ export function AdminBoard({
 			document.body.removeChild(textArea);
 			setCopied(true);
 			setTimeout(() => setCopied(false), 2000);
+		}
+	};
+
+	const handleCopyView = async () => {
+		try {
+			await navigator.clipboard.writeText(viewUrl);
+			setCopiedView(true);
+			setTimeout(() => setCopiedView(false), 2000);
+		} catch {
+			const textArea = document.createElement("textarea");
+			textArea.value = viewUrl;
+			document.body.appendChild(textArea);
+			textArea.select();
+			document.execCommand("copy");
+			document.body.removeChild(textArea);
+			setCopiedView(true);
+			setTimeout(() => setCopiedView(false), 2000);
 		}
 	};
 
@@ -186,38 +205,42 @@ export function AdminBoard({
 				</div>
 			</header>
 
-			{/* Share URL */}
-			<div className="mx-auto w-full max-w-lg px-4 pt-4">
-				<div className="flex gap-2">
-					<div className="flex flex-1 items-center overflow-hidden rounded-lg bg-card ring-1 ring-border">
-						<span className="truncate px-3 py-2.5 text-xs text-muted-foreground">
-							{shareUrl}
-						</span>
-					</div>
-					<button
-						onClick={handleCopy}
-						className="flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground transition-all active:scale-[0.97] cursor-pointer"
-						type="button"
-					>
-						{copied ? (
-							<>
-								<svg
-									width="14"
-									height="14"
-									viewBox="0 0 16 16"
-									fill="none"
-									aria-hidden="true"
-								>
-									<path
-										d="M3 8.5L6.5 12L13 4"
-										stroke="currentColor"
-										strokeWidth="2"
-										strokeLinecap="round"
-										strokeLinejoin="round"
-									/>
-								</svg>
-								Copied
-							</>
+			{/* Share URLs */}
+			<div className="mx-auto w-full max-w-lg px-4 pt-4 space-y-3">
+				<div>
+					<p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+						Play (pick squares)
+					</p>
+					<div className="flex gap-2">
+						<div className="flex flex-1 items-center overflow-hidden rounded-lg bg-card ring-1 ring-border">
+							<span className="truncate px-3 py-2.5 text-xs text-muted-foreground">
+								{shareUrl}
+							</span>
+						</div>
+						<button
+							onClick={handleCopy}
+							className="flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground transition-all active:scale-[0.97] cursor-pointer"
+							type="button"
+						>
+							{copied ? (
+								<>
+									<svg
+										width="14"
+										height="14"
+										viewBox="0 0 16 16"
+										fill="none"
+										aria-hidden="true"
+									>
+										<path
+											d="M3 8.5L6.5 12L13 4"
+											stroke="currentColor"
+											strokeWidth="2"
+											strokeLinecap="round"
+											strokeLinejoin="round"
+										/>
+									</svg>
+									Copied
+								</>
 						) : (
 							<>
 								<svg
@@ -247,6 +270,72 @@ export function AdminBoard({
 							</>
 						)}
 					</button>
+				</div>
+				</div>
+				<div>
+					<p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+						View (read-only live board)
+					</p>
+					<div className="flex gap-2">
+						<div className="flex flex-1 items-center overflow-hidden rounded-lg bg-card ring-1 ring-border">
+							<span className="truncate px-3 py-2.5 text-xs text-muted-foreground">
+								{viewUrl}
+							</span>
+						</div>
+						<button
+							onClick={handleCopyView}
+							className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-4 py-2.5 text-xs font-semibold text-foreground transition-all active:scale-[0.97] cursor-pointer hover:bg-muted"
+							type="button"
+						>
+							{copiedView ? (
+								<>
+									<svg
+										width="14"
+										height="14"
+										viewBox="0 0 16 16"
+										fill="none"
+										aria-hidden="true"
+									>
+										<path
+											d="M3 8.5L6.5 12L13 4"
+											stroke="currentColor"
+											strokeWidth="2"
+											strokeLinecap="round"
+											strokeLinejoin="round"
+										/>
+									</svg>
+									Copied
+								</>
+							) : (
+								<>
+									<svg
+										width="14"
+										height="14"
+										viewBox="0 0 16 16"
+										fill="none"
+										aria-hidden="true"
+									>
+										<rect
+											x="5"
+											y="5"
+											width="8"
+											height="8"
+											rx="1.5"
+											stroke="currentColor"
+											strokeWidth="1.5"
+										/>
+										<path
+											d="M3 11V3.5C3 3.22386 3.22386 3 3.5 3H11"
+											stroke="currentColor"
+											strokeWidth="1.5"
+											strokeLinecap="round"
+										/>
+									</svg>
+									Copy
+								</>
+							)}
+						</button>
+					</div>
 				</div>
 			</div>
 
