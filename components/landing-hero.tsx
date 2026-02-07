@@ -3,7 +3,8 @@
 import { useQuery } from "convex/react";
 import { PlusIcon } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { api } from "@/convex/_generated/api";
 
 const squareOptions = [1, 2, 4, 5, 10];
@@ -35,6 +36,7 @@ function FooterLinks() {
 
 export function LandingHero() {
 	const poolCount = useQuery(api.pools.getPoolCount, {});
+	const { executeRecaptcha } = useGoogleReCaptcha();
 	const [step, setStep] = useState<"hero" | "configure" | "success">("hero");
 	const [createdAt, setCreatedAt] = useState<number | null>(null);
 	const [devPoolLink, setDevPoolLink] = useState<string | null>(null);
@@ -75,7 +77,7 @@ export function LandingHero() {
 		return () => clearTimeout(t);
 	}, [createdAt]);
 
-	const handleCreatePool = async () => {
+	const handleCreatePool = useCallback(async () => {
 		const trimmedTitle = title.trim();
 		const trimmedEmail = adminEmail.trim();
 		if (!trimmedTitle || !trimmedEmail) {
@@ -85,6 +87,16 @@ export function LandingHero() {
 		setError(null);
 		setLoading(true);
 		try {
+			// Get reCAPTCHA token (if available; gracefully skip on failure)
+			let captchaToken: string | undefined;
+			if (executeRecaptcha) {
+				try {
+					captchaToken = await executeRecaptcha("create_pool");
+				} catch {
+					// reCAPTCHA may fail in test/headless environments — continue without token
+				}
+			}
+
 			const res = await fetch("/api/pools", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -92,6 +104,7 @@ export function LandingHero() {
 					title: trimmedTitle,
 					adminEmail: trimmedEmail,
 					maxSquaresPerPerson: squaresPerPerson,
+					captchaToken,
 				}),
 			});
 			const data = await res.json();
@@ -122,7 +135,7 @@ export function LandingHero() {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [title, adminEmail, squaresPerPerson, executeRecaptcha]);
 
 	const handleCreateNewPool = () => {
 		if (typeof window !== "undefined") {

@@ -6,6 +6,32 @@ import { api } from "@/convex/_generated/api";
 import { sendAdminLoginEmail } from "@/lib/email";
 import { ROUTES } from "@/lib/types";
 
+/**
+ * Verify a reCAPTCHA v3 token with Google's API.
+ * Returns the score (0.0–1.0) on success, or null on failure.
+ */
+async function verifyRecaptcha(
+	token: string,
+): Promise<{ success: boolean; score: number } | null> {
+	const secret = process.env.RECAPTCHA_SECRET_KEY;
+	if (!secret) return null;
+
+	try {
+		const res = await fetch(
+			"https://www.google.com/recaptcha/api/siteverify",
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/x-www-form-urlencoded" },
+				body: new URLSearchParams({ secret, response: token }),
+			},
+		);
+		const data = await res.json();
+		return { success: data.success === true, score: data.score ?? 0 };
+	} catch {
+		return null;
+	}
+}
+
 export async function POST(request: Request) {
 	try {
 		const body = await request.json();
@@ -16,12 +42,35 @@ export async function POST(request: Request) {
 			typeof body.maxSquaresPerPerson === "number"
 				? body.maxSquaresPerPerson
 				: 5;
+		const captchaToken =
+			typeof body.captchaToken === "string" ? body.captchaToken : null;
 
 		if (!title || !adminEmail) {
 			return NextResponse.json(
 				{ error: "Title and admin email are required" },
 				{ status: 400 },
 			);
+		}
+
+		// Verify reCAPTCHA in production; skip in development for dev/tests
+		if (process.env.NODE_ENV !== "development") {
+			if (!captchaToken) {
+				return NextResponse.json(
+					{ error: "reCAPTCHA verification required" },
+					{ status: 400 },
+				);
+			}
+			const captchaResult = await verifyRecaptcha(captchaToken);
+			if (
+				!captchaResult ||
+				!captchaResult.success ||
+				captchaResult.score < 0.5
+			) {
+				return NextResponse.json(
+					{ error: "reCAPTCHA verification failed. Please try again." },
+					{ status: 403 },
+				);
+			}
 		}
 
 		const { slug, poolId } = await fetchMutation(api.pools.createPool, {
