@@ -206,7 +206,7 @@ export function SquaresGrid({
 													className="text-[10px] leading-none md:text-sm [&>svg]:h-3 [&>svg]:w-3 md:[&>svg]:h-3.5 md:[&>svg]:w-3.5 [&_svg]:stroke-foreground"
 													size={14}
 												/>
-												<span className="line-clamp-2 w-full px-0.5 text-center text-[6px] font-bold leading-tight md:text-[7px]">
+												<span className="line-clamp-2 w-full px-0.5 text-center text-[5px] font-normal leading-tight md:text-[6px]">
 													{square.claimedBy.name}
 												</span>
 											</>
