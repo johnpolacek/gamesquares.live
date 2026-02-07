@@ -181,19 +181,16 @@ export default function DemoPage() {
 	}, []);
 
 	// ── Animate scene exit ──────────────────────────────────────────────
-	const animateOut = useCallback((index: number, direction: "left" | "right") => {
+	const animateOut = useCallback((index: number) => {
 		const el = sceneRefs.current[index];
 		if (!el) return gsap.timeline();
 
-		const xTo = direction === "left" ? -60 : 60;
-
 		return gsap.timeline().to(el, {
 			opacity: 0,
-			x: xTo,
-			duration: 0.35,
+			duration: 0.3,
 			ease: "power2.in",
 			onComplete: () => {
-				gsap.set(el, { visibility: "hidden", x: 0 });
+				gsap.set(el, { visibility: "hidden" });
 			},
 		});
 	}, []);
@@ -204,36 +201,12 @@ export default function DemoPage() {
 			if (target === current || target < 0 || target >= TOTAL || animating.current) return;
 			animating.current = true;
 
-			const direction = target > current ? "left" : "right";
-
-			// Prepare next scene
-			const nextEl = sceneRefs.current[target];
-			if (nextEl) {
-				gsap.set(nextEl, {
-					visibility: "visible",
-					opacity: 0,
-					x: direction === "left" ? 60 : -60,
-				});
-			}
-
-			// Animate out current, then in next
-			const outTl = animateOut(current, direction);
+			// Fade out current scene, then animate in the next
+			const outTl = animateOut(current);
 			outTl.eventCallback("onComplete", () => {
-				if (nextEl) {
-					gsap.to(nextEl, {
-						x: 0,
-						opacity: 1,
-						duration: 0.35,
-						ease: "power2.out",
-						onComplete: () => {
-							animateIn(target);
-							setCurrent(target);
-							animating.current = false;
-						},
-					});
-				} else {
-					animating.current = false;
-				}
+				animateIn(target);
+				setCurrent(target);
+				animating.current = false;
 			});
 		},
 		[current, animateOut, animateIn],

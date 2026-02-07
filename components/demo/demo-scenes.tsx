@@ -345,7 +345,7 @@ export const ScenePick = forwardRef<HTMLDivElement>((_, ref) => {
 	};
 	return (
 		<SceneWrapper ref={ref}>
-			<div className="flex w-full max-w-lg flex-col items-center gap-6">
+			<div className="flex w-full max-w-lg sm:max-w-xl flex-col items-center gap-6">
 				<h3 className="scene-el font-mono text-xl font-bold text-foreground text-center">
 					Pick Your Squares
 				</h3>
@@ -362,7 +362,7 @@ export const ScenePick = forwardRef<HTMLDivElement>((_, ref) => {
 				</div>
 
 				{/* Grid */}
-				<div className="scene-el w-full max-w-xs mx-auto">
+				<div className="scene-el w-full max-w-sm sm:max-w-md mx-auto">
 					<MiniGrid pool={partialPool} />
 				</div>
 			</div>
@@ -376,7 +376,7 @@ ScenePick.displayName = "ScenePick";
 // ═══════════════════════════════════════════════════════════════════════
 export const SceneStart = forwardRef<HTMLDivElement>((_, ref) => (
 	<SceneWrapper ref={ref}>
-		<div className="flex w-full max-w-lg flex-col items-center gap-6">
+		<div className="flex w-full max-w-lg sm:max-w-xl flex-col items-center gap-6">
 			<h3 className="scene-el font-mono text-xl font-bold text-foreground text-center">
 				Game Time
 			</h3>
@@ -392,7 +392,7 @@ export const SceneStart = forwardRef<HTMLDivElement>((_, ref) => (
 			</p>
 
 			{/* Number reveal */}
-			<div className="scene-el w-full max-w-xs mx-auto flex flex-col gap-2">
+			<div className="scene-el w-full max-w-sm sm:max-w-md mx-auto flex flex-col gap-2">
 				<div className="flex items-center gap-2">
 					<div className="h-2.5 w-2.5 rounded-full bg-patriots" />
 					<span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Patriots</span>
@@ -418,7 +418,7 @@ export const SceneStart = forwardRef<HTMLDivElement>((_, ref) => (
 			</div>
 
 			{/* Full grid */}
-			<div className="scene-el w-full max-w-xs mx-auto">
+			<div className="scene-el w-full max-w-sm sm:max-w-md mx-auto">
 				<MiniGrid pool={DEMO_POOL_FULL} />
 			</div>
 		</div>
@@ -434,7 +434,7 @@ export const SceneQ1 = forwardRef<HTMLDivElement>((_, ref) => {
 	const winner = getWinnerName(DEMO_POOL_FULL, q.eaglesScore, q.patriotsScore);
 	return (
 		<SceneWrapper ref={ref}>
-			<div className="flex w-full max-w-lg flex-col items-center gap-6">
+			<div className="flex w-full max-w-lg sm:max-w-xl flex-col items-center gap-6">
 				<h3 className="scene-el font-mono text-xl font-bold text-foreground text-center">
 					First Score!
 				</h3>
@@ -468,7 +468,7 @@ export const SceneQ1 = forwardRef<HTMLDivElement>((_, ref) => {
 				</div>
 
 				{/* Grid with Q1 highlight */}
-				<div className="scene-el w-full max-w-xs mx-auto">
+				<div className="scene-el w-full max-w-sm sm:max-w-md mx-auto">
 					<MiniGrid
 						pool={DEMO_POOL_FULL}
 						winningSquares={DEMO_Q1_WINNING}
@@ -488,7 +488,7 @@ export const SceneFinal = forwardRef<HTMLDivElement>((_, ref) => {
 	const finalQ = DEMO_QUARTERS[3];
 	return (
 		<SceneWrapper ref={ref}>
-			<div className="flex w-full max-w-lg flex-col items-center gap-6">
+			<div className="flex w-full max-w-lg sm:max-w-xl flex-col items-center gap-6">
 				<div className="scene-el flex items-center gap-2 text-primary">
 					<Trophy className="w-8 h-8" />
 				</div>
@@ -545,7 +545,7 @@ export const SceneFinal = forwardRef<HTMLDivElement>((_, ref) => {
 				</div>
 
 				{/* Grid with all winners */}
-				<div className="scene-el w-full max-w-xs mx-auto">
+				<div className="scene-el w-full max-w-sm sm:max-w-md mx-auto">
 					<MiniGrid
 						pool={DEMO_POOL_FULL}
 						winningSquares={DEMO_WINNING_SQUARES}
