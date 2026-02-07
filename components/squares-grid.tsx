@@ -118,22 +118,29 @@ export function SquaresGrid({
 					<div className="flex items-center justify-center" />
 
 					{/* Column headers - Patriots numbers */}
-					{Array.from({ length: 10 }, (_, i) => (
-						<div
-							key={`col-${i}`}
-							className="flex items-center justify-center bg-patriots"
-						>
-							<span className="text-[10px] font-bold text-patriots-foreground md:text-xs">
-								{pool.colNumbers[i] ?? "?"}
-							</span>
-						</div>
-					))}
+					{Array.from({ length: 10 }, (_, i) => {
+						const hasNumber = pool.colNumbers[i] !== null;
+						return (
+							<div
+								key={`col-${i}`}
+								className={`flex items-center justify-center bg-patriots ${hasNumber ? "opacity-0 animate-fade-in-up" : ""}`}
+								style={hasNumber ? { animationDelay: `${i * 30}ms` } : undefined}
+							>
+								<span className="text-[10px] font-bold text-patriots-foreground md:text-xs">
+									{pool.colNumbers[i] ?? "?"}
+								</span>
+							</div>
+						);
+					})}
 
 					{/* Rows */}
 					{pool.squares.map((row, rowIdx) => (
 						<React.Fragment key={rowIdx}>
 							{/* Row header - Eagles numbers */}
-							<div className="flex items-center justify-center bg-eagles">
+							<div
+								className={`flex items-center justify-center bg-eagles ${pool.rowNumbers[rowIdx] !== null ? "opacity-0 animate-fade-in-up" : ""}`}
+								style={pool.rowNumbers[rowIdx] !== null ? { animationDelay: `${rowIdx * 30}ms` } : undefined}
+							>
 								<span className="text-[10px] font-bold text-eagles-foreground md:text-xs">
 									{pool.rowNumbers[rowIdx] ?? "?"}
 								</span>
@@ -173,12 +180,18 @@ export function SquaresGrid({
 														}
 													: undefined
 										}
+										data-winner={winnerInfo ? "true" : undefined}
+										data-live-score={isCurrentScoreSquare && !winnerInfo ? "true" : undefined}
 										className={`relative flex aspect-square flex-col items-center justify-center gap-0.5 overflow-hidden border-[0.5px] border-border/40 transition-all duration-200 ease-out ${
 											!winnerInfo && !isCurrentScoreSquare
 												? isClaimed
 													? "bg-white"
 													: "bg-card"
 												: ""
+										} ${
+											winnerInfo ? "animate-winner-glow" : ""
+										} ${
+											isCurrentScoreSquare && !winnerInfo ? "animate-score-breathe" : ""
 										} ${
 											canClick
 												? "cursor-pointer hover:ring-2 hover:ring-border hover:ring-inset hover:scale-[1.02] active:scale-95"
@@ -207,7 +220,7 @@ export function SquaresGrid({
 											</span>
 										)}
 										{isClaimed && square.claimedBy && (
-											<>
+											<div className="flex flex-col items-center gap-0.5 animate-square-claim">
 												<GraphicIcon
 													graphic={square.claimedBy.graphic}
 													className="text-[8px] relative top-0.5 leading-none h-3 w-3 flex items-center justify-center overflow-hidden [&>svg]:h-2.5 [&>svg]:w-2.5 [&_svg]:stroke-foreground"
@@ -216,7 +229,7 @@ export function SquaresGrid({
 												<span className="line-clamp-2 w-full px-0.5 text-center text-[5px] font-normal leading-tight md:text-[6px]">
 													{square.claimedBy.name}
 												</span>
-											</>
+											</div>
 										)}
 									</button>
 								);

@@ -219,7 +219,7 @@ export function AdminBoard({
 						</div>
 						<button
 							onClick={handleCopy}
-							className="flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground transition-all active:scale-[0.97] cursor-pointer"
+							className={`flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground transition-all active:scale-[0.97] cursor-pointer ${copied ? "animate-scale-in" : ""}`}
 							type="button"
 						>
 							{copied ? (
@@ -284,7 +284,7 @@ export function AdminBoard({
 						</div>
 						<button
 							onClick={handleCopyView}
-							className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-4 py-2.5 text-xs font-semibold text-foreground transition-all active:scale-[0.97] cursor-pointer hover:bg-muted"
+							className={`flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-4 py-2.5 text-xs font-semibold text-foreground transition-all active:scale-[0.97] cursor-pointer hover:bg-muted ${copiedView ? "animate-scale-in" : ""}`}
 							type="button"
 						>
 							{copiedView ? (
@@ -414,12 +414,13 @@ export function AdminBoard({
 						Players
 					</h3>
 					<div className="flex flex-wrap justify-center gap-2">
-						{allPlayerNames.map((name) => {
+						{allPlayerNames.map((name, idx) => {
 							const player = pool.players[name];
 							return (
 								<div
 									key={name}
-									className="flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 ring-1 ring-border"
+									className="flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 ring-1 ring-border opacity-0 animate-fade-in-up"
+									style={{ animationDelay: `${idx * 40}ms` }}
 								>
 									<GraphicIcon
 										graphic={player.identity.graphic}
@@ -484,8 +485,8 @@ export function AdminBoard({
 
 			{/* Confirmation dialog for assigning numbers when squares are open */}
 			{showConfirmNumbers && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-					<div className="w-full max-w-sm rounded-xl bg-card p-6 shadow-lg ring-1 ring-border">
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 animate-fade-in">
+					<div className="w-full max-w-sm rounded-xl bg-card p-6 shadow-lg ring-1 ring-border animate-fade-in-up">
 						<h3 className="text-base font-bold text-foreground">
 							{openCount} squares are still open
 						</h3>
@@ -525,8 +526,8 @@ export function AdminBoard({
 
 			{/* Confirmation dialog for re-assigning numbers */}
 			{showConfirmReassign && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-					<div className="w-full max-w-sm rounded-xl bg-card p-6 shadow-lg ring-1 ring-border">
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 animate-fade-in">
+					<div className="w-full max-w-sm rounded-xl bg-card p-6 shadow-lg ring-1 ring-border animate-fade-in-up">
 						<h3 className="text-base font-bold text-foreground">
 							Re-assign numbers?
 						</h3>
@@ -560,8 +561,8 @@ export function AdminBoard({
 
 			{/* Confirmation dialog for distributing remaining squares */}
 			{showConfirmDistribute && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-					<div className="w-full max-w-sm rounded-xl bg-card p-6 shadow-lg ring-1 ring-border">
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 animate-fade-in">
+					<div className="w-full max-w-sm rounded-xl bg-card p-6 shadow-lg ring-1 ring-border animate-fade-in-up">
 						<h3 className="text-base font-bold text-foreground">
 							Distribute {openCount} squares?
 						</h3>

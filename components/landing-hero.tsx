@@ -1,8 +1,10 @@
 "use client";
 
+import { useQuery } from "convex/react";
 import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { api } from "@/convex/_generated/api";
 
 const squareOptions = [1, 2, 4, 5, 10];
 const CREATED_AT_KEY = "gamesquares_pool_created_at";
@@ -32,6 +34,7 @@ function FooterLinks() {
 }
 
 export function LandingHero() {
+	const poolCount = useQuery(api.pools.getPoolCount, {});
 	const [step, setStep] = useState<"hero" | "configure" | "success">("hero");
 	const [createdAt, setCreatedAt] = useState<number | null>(null);
 	const [devPoolLink, setDevPoolLink] = useState<string | null>(null);
@@ -313,21 +316,24 @@ export function LandingHero() {
 							<span className="text-sm text-muted-foreground">
 								Total squares
 							</span>
-							<span className="text-sm font-semibold text-card-foreground">
+							<span className="text-sm font-semibold tabular-nums text-card-foreground">
 								100
 							</span>
 						</div>
 						<div className="my-3 h-px bg-border" />
 						<div className="flex items-center justify-between">
 							<span className="text-sm text-muted-foreground">Max players</span>
-							<span className="text-sm font-semibold text-card-foreground">
+							<span
+								key={`players-${totalPlayers}`}
+								className="text-sm font-semibold tabular-nums text-card-foreground animate-score-pop"
+							>
 								{totalPlayers}
 							</span>
 						</div>
 					</div>
 
 					{error && (
-						<p className="text-sm text-destructive" role="alert">
+						<p className="text-sm text-destructive animate-fade-in-up" role="alert">
 							{error}
 						</p>
 					)}
@@ -336,7 +342,7 @@ export function LandingHero() {
 						data-testid="landing-create-pool-submit"
 						onClick={handleCreatePool}
 						disabled={loading}
-						className="w-full rounded-lg bg-primary px-6 py-4 text-base font-semibold text-primary-foreground shadow-sm transition-all active:scale-[0.98] disabled:opacity-60 disabled:active:scale-100"
+						className={`w-full rounded-lg bg-primary px-6 py-4 text-base font-semibold text-primary-foreground shadow-sm transition-all active:scale-[0.98] disabled:opacity-60 disabled:active:scale-100 ${loading ? "animate-subtle-pulse" : ""}`}
 						type="button"
 					>
 						{loading ? "Creating…" : "Create Pool"}
@@ -431,7 +437,16 @@ export function LandingHero() {
 				<p className="text-sm text-muted-foreground opacity-0 animate-fade-in-up animate-delay-2">
 					No account needed. Create and share in seconds.
 				</p>
-				<div className="opacity-0 animate-fade-in-up animate-delay-3">
+				{poolCount !== undefined && poolCount > 0 && (
+					<p className="text-sm text-muted-foreground opacity-0 animate-fade-in-up animate-delay-3">
+						<span key={poolCount} className="font-mono font-bold tabular-nums text-foreground animate-score-pop">
+							{poolCount.toLocaleString()}
+						</span>
+						{" "}
+						{poolCount === 1 ? "pool" : "pools"} created
+					</p>
+				)}
+				<div className="opacity-0 animate-fade-in-up animate-delay-4">
 					<FooterLinks />
 				</div>
 			</div>

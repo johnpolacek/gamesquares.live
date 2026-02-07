@@ -279,7 +279,7 @@ export default function ViewPage() {
 						</span>
 					)}
 					{isGameComplete && (
-						<span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-600">
+						<span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-600 animate-scale-in">
 							Final
 						</span>
 					)}
@@ -329,7 +329,8 @@ export default function ViewPage() {
 										Eagles
 									</span>
 									<span
-										className="text-5xl font-black tabular-nums text-foreground"
+										key={`eagles-${currentRowScore}`}
+										className="text-5xl font-black tabular-nums text-foreground animate-score-pop"
 										data-testid="view-eagles-score"
 									>
 										{currentRowScore}
@@ -345,7 +346,7 @@ export default function ViewPage() {
 										</span>
 									)}
 									{isGameComplete && (
-										<span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">
+										<span className="text-xs font-bold text-emerald-600 uppercase tracking-wider animate-scale-in">
 											Final
 										</span>
 									)}
@@ -355,7 +356,8 @@ export default function ViewPage() {
 										Patriots
 									</span>
 									<span
-										className="text-5xl font-black tabular-nums text-foreground"
+										key={`patriots-${currentColScore}`}
+										className="text-5xl font-black tabular-nums text-foreground animate-score-pop"
 										data-testid="view-patriots-score"
 									>
 										{currentColScore}
@@ -372,18 +374,19 @@ export default function ViewPage() {
 								Scoring
 							</h3>
 							<div className="flex flex-col gap-2.5">
-								{quarterDisplays.map((q) => {
+								{quarterDisplays.map((q, idx) => {
 									const isFinal = isGameComplete && q.isLatest;
 									const eaglesWinning = q.rowTeamScore > q.colTeamScore;
 									const patriotsWinning = q.colTeamScore > q.rowTeamScore;
 									return (
 										<div
 											key={q.label}
-											className={`rounded-lg p-3.5 ${
+											className={`rounded-lg p-3.5 opacity-0 animate-fade-in-up ${
 												q.isLatest && !isGameComplete
 													? "bg-emerald-500/10 ring-1 ring-emerald-500/30"
 													: "bg-white ring-1 ring-border"
 											}`}
+											style={{ animationDelay: `${idx * 60}ms` }}
 										>
 											<div className="flex items-center justify-between">
 												<span className="text-sm font-bold text-muted-foreground uppercase tracking-wide">
@@ -446,7 +449,7 @@ export default function ViewPage() {
 								{whatIfs.map((s) => (
 									<div
 										key={s.label}
-										className={`rounded-lg p-3.5 ${
+										className={`rounded-lg p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
 											s.teamSide === "row"
 												? "bg-emerald-500/8 ring-1 ring-emerald-500/20"
 												: "bg-blue-500/8 ring-1 ring-blue-500/20"

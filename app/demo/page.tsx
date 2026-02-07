@@ -1,18 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, ArrowRight, ChevronLeft, Play, Pause } from "lucide-react";
 import gsap from "gsap";
+import { ArrowLeft, ArrowRight, ChevronLeft, Pause, Play } from "lucide-react";
+import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { SCENE_META } from "@/components/demo/demo-data";
 import {
 	SceneCreate,
-	SceneShare,
+	SceneFinal,
 	SceneJoin,
 	ScenePick,
-	SceneStart,
 	SceneQ1,
-	SceneFinal,
+	SceneShare,
+	SceneStart,
 } from "@/components/demo/demo-scenes";
 
 const SCENE_COMPONENTS = [
@@ -57,7 +57,8 @@ export default function DemoPage() {
 		// Reset children
 		gsap.set(sceneEls, { opacity: 0, y: 20 });
 		if (playerChips.length) gsap.set(playerChips, { opacity: 0, scale: 0.5 });
-		if (numCells.length) gsap.set(numCells, { opacity: 0, scale: 0, rotation: -90 });
+		if (numCells.length)
+			gsap.set(numCells, { opacity: 0, scale: 0, rotation: -90 });
 		if (chatBubbles.length) gsap.set(chatBubbles, { opacity: 0, x: 30 });
 		if (quarterRows.length) gsap.set(quarterRows, { opacity: 0, x: -20 });
 
@@ -148,7 +149,17 @@ export default function DemoPage() {
 			// Create scene: pulse the button
 			const btn = el.querySelector(".create-btn");
 			if (btn) {
-				tl.to(btn, { scale: 1.03, duration: 0.4, ease: "power1.inOut", yoyo: true, repeat: 1 }, "-=0.2");
+				tl.to(
+					btn,
+					{
+						scale: 1.03,
+						duration: 0.4,
+						ease: "power1.inOut",
+						yoyo: true,
+						repeat: 1,
+					},
+					"-=0.2",
+				);
 			}
 		}
 
@@ -156,11 +167,19 @@ export default function DemoPage() {
 			// Q1: pulse the score numbers
 			const scores = el.querySelectorAll(".score-num");
 			if (scores.length) {
-				tl.from(scores, { scale: 0.5, duration: 0.5, ease: "back.out(2)", stagger: 0.1 }, "-=0.4");
+				tl.from(
+					scores,
+					{ scale: 0.5, duration: 0.5, ease: "back.out(2)", stagger: 0.1 },
+					"-=0.4",
+				);
 			}
 			const winner = el.querySelector(".winner-name");
 			if (winner) {
-				tl.from(winner, { opacity: 0, scale: 0.8, duration: 0.4, ease: "back.out(1.5)" }, "-=0.1");
+				tl.from(
+					winner,
+					{ opacity: 0, scale: 0.8, duration: 0.4, ease: "back.out(1.5)" },
+					"-=0.1",
+				);
 			}
 		}
 
@@ -168,12 +187,30 @@ export default function DemoPage() {
 			// Final: bigger score reveal + CTA
 			const scores = el.querySelectorAll(".score-num");
 			if (scores.length) {
-				tl.from(scores, { scale: 0.3, duration: 0.6, ease: "back.out(2.5)", stagger: 0.12 }, "-=0.5");
+				tl.from(
+					scores,
+					{ scale: 0.3, duration: 0.6, ease: "back.out(2.5)", stagger: 0.12 },
+					"-=0.5",
+				);
 			}
 			const cta = el.querySelector(".cta-btn");
 			if (cta) {
-				tl.from(cta, { opacity: 0, y: 20, duration: 0.5, ease: "power2.out" }, "-=0.1");
-				tl.to(cta, { scale: 1.03, duration: 0.5, ease: "power1.inOut", yoyo: true, repeat: 1 }, "+=0.2");
+				tl.from(
+					cta,
+					{ opacity: 0, y: 20, duration: 0.5, ease: "power2.out" },
+					"-=0.1",
+				);
+				tl.to(
+					cta,
+					{
+						scale: 1.03,
+						duration: 0.5,
+						ease: "power1.inOut",
+						yoyo: true,
+						repeat: 1,
+					},
+					"+=0.2",
+				);
 			}
 		}
 
@@ -198,7 +235,13 @@ export default function DemoPage() {
 	// ── Go to scene ─────────────────────────────────────────────────────
 	const goTo = useCallback(
 		(target: number) => {
-			if (target === current || target < 0 || target >= TOTAL || animating.current) return;
+			if (
+				target === current ||
+				target < 0 ||
+				target >= TOTAL ||
+				animating.current
+			)
+				return;
 			animating.current = true;
 
 			// Fade out current scene, then animate in the next
@@ -268,7 +311,10 @@ export default function DemoPage() {
 	}, [isPlaying, current, next]);
 
 	return (
-		<div ref={containerRef} className="relative h-dvh w-full overflow-hidden bg-background">
+		<div
+			ref={containerRef}
+			className="relative h-dvh w-full overflow-hidden bg-background"
+		>
 			{/* ── Top bar ──────────────────────────────────────────────────── */}
 			<div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3 sm:px-6 bg-background/80 backdrop-blur-sm">
 				<Link
@@ -278,15 +324,61 @@ export default function DemoPage() {
 					<ChevronLeft className="w-4 h-4" />
 					<span className="hidden sm:inline">Back</span>
 				</Link>
-				<div className="flex items-center gap-1.5">
-					<svg width="20" height="20" viewBox="0 0 32 32" fill="none" className="text-primary" aria-hidden="true">
-						<rect x="2" y="2" width="12" height="12" rx="2" fill="currentColor" opacity="0.9" />
-						<rect x="18" y="2" width="12" height="12" rx="2" fill="currentColor" opacity="0.6" />
-						<rect x="2" y="18" width="12" height="12" rx="2" fill="currentColor" opacity="0.6" />
-						<rect x="18" y="18" width="12" height="12" rx="2" fill="currentColor" opacity="0.3" />
-					</svg>
-					<span className="font-mono text-sm font-bold text-foreground">GameSquares</span>
-				</div>
+				<Link
+					href="/"
+					className="flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+				>
+					<div className="flex items-center gap-1.5">
+						<svg
+							width="20"
+							height="20"
+							viewBox="0 0 32 32"
+							fill="none"
+							className="text-primary"
+							aria-hidden="true"
+						>
+							<rect
+								x="2"
+								y="2"
+								width="12"
+								height="12"
+								rx="2"
+								fill="currentColor"
+								opacity="0.9"
+							/>
+							<rect
+								x="18"
+								y="2"
+								width="12"
+								height="12"
+								rx="2"
+								fill="currentColor"
+								opacity="0.6"
+							/>
+							<rect
+								x="2"
+								y="18"
+								width="12"
+								height="12"
+								rx="2"
+								fill="currentColor"
+								opacity="0.6"
+							/>
+							<rect
+								x="18"
+								y="18"
+								width="12"
+								height="12"
+								rx="2"
+								fill="currentColor"
+								opacity="0.3"
+							/>
+						</svg>
+						<span className="font-mono text-sm font-bold text-foreground">
+							GameSquares
+						</span>
+					</div>
+				</Link>
 				<div className="w-14" /> {/* Spacer for centering */}
 			</div>
 
@@ -316,7 +408,9 @@ export default function DemoPage() {
 						>
 							<span
 								className={`text-[9px] font-semibold uppercase tracking-wider transition-colors sm:text-[10px] ${
-									i === current ? "text-primary" : "text-muted-foreground/50 group-hover:text-muted-foreground"
+									i === current
+										? "text-primary"
+										: "text-muted-foreground/50 group-hover:text-muted-foreground"
 								}`}
 							>
 								{s.label}
@@ -352,7 +446,11 @@ export default function DemoPage() {
 						className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-all hover:opacity-90 active:scale-95"
 						aria-label={isPlaying ? "Pause" : "Play"}
 					>
-						{isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+						{isPlaying ? (
+							<Pause className="w-4 h-4" />
+						) : (
+							<Play className="w-4 h-4 ml-0.5" />
+						)}
 					</button>
 
 					<button

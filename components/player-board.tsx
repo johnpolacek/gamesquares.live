@@ -205,7 +205,7 @@ export function PlayerBoard({ pool, onClaimSquare }: PlayerBoardProps) {
 	}
 
 	return (
-		<div className="flex min-h-dvh flex-col bg-background">
+		<div className="flex min-h-dvh flex-col bg-background opacity-0 animate-fade-in-up">
 			<header className="flex items-center justify-between px-4 py-3 bg-card shadow-sm ring-1 ring-border/50">
 				<div className="flex items-center gap-2">
 					<svg
@@ -266,7 +266,7 @@ export function PlayerBoard({ pool, onClaimSquare }: PlayerBoardProps) {
 			</header>
 
 			{canPick && (
-				<div className="bg-primary/10 px-4 py-2.5">
+				<div key="banner-pick" className="bg-primary/10 px-4 py-2.5 animate-fade-in-up">
 					<p className="text-center text-sm font-medium text-primary">
 						{"Tap a square to claim it. "}
 						<span className="font-bold">{remaining}</span>
@@ -276,7 +276,7 @@ export function PlayerBoard({ pool, onClaimSquare }: PlayerBoardProps) {
 			)}
 
 			{boardFull && pool.status !== "locked" && (
-				<div className="bg-[oklch(0.85_0.15_80)] px-4 py-2.5">
+				<div key="banner-full" className="bg-[oklch(0.85_0.15_80)] px-4 py-2.5 animate-fade-in-up">
 					<p className="text-center text-sm font-semibold text-[oklch(0.3_0.1_80)]">
 						Board is full! Waiting for admin to assign numbers.
 					</p>
@@ -284,7 +284,7 @@ export function PlayerBoard({ pool, onClaimSquare }: PlayerBoardProps) {
 			)}
 
 			{pool.status === "locked" && (
-				<div className="bg-primary/10 px-4 py-2.5">
+				<div key="banner-locked" className="bg-primary/10 px-4 py-2.5 animate-fade-in-up">
 					<p className="text-center text-sm font-semibold text-primary">
 						Board is locked. Good luck!
 					</p>
@@ -292,7 +292,7 @@ export function PlayerBoard({ pool, onClaimSquare }: PlayerBoardProps) {
 			)}
 
 			{!canPick && !boardFull && (
-				<div className="bg-muted px-4 py-2.5">
+				<div key="banner-done" className="bg-muted px-4 py-2.5 animate-fade-in-up">
 					<p className="text-center text-sm font-medium text-muted-foreground">
 						{"You've picked all your squares. Waiting for others."}
 					</p>
@@ -360,24 +360,24 @@ export function PlayerBoard({ pool, onClaimSquare }: PlayerBoardProps) {
 			</div>
 
 			<div className="flex gap-3 px-4 pt-4 pb-8">
-				<div className="flex flex-1 flex-col items-center rounded-lg bg-card p-3 ring-1 ring-border">
-					<span className="font-mono text-lg font-bold text-foreground">
+				<div key={`picks-${currentCount}`} className="flex flex-1 flex-col items-center rounded-lg bg-card p-3 ring-1 ring-border animate-highlight">
+					<span className="font-mono text-lg font-bold tabular-nums text-foreground">
 						{currentCount}
 					</span>
 					<span className="text-[10px] font-medium text-muted-foreground">
 						your picks
 					</span>
 				</div>
-				<div className="flex flex-1 flex-col items-center rounded-lg bg-card p-3 ring-1 ring-border">
-					<span className="font-mono text-lg font-bold text-foreground">
+				<div key={`remaining-${remaining}`} className="flex flex-1 flex-col items-center rounded-lg bg-card p-3 ring-1 ring-border animate-highlight">
+					<span className="font-mono text-lg font-bold tabular-nums text-foreground">
 						{remaining}
 					</span>
 					<span className="text-[10px] font-medium text-muted-foreground">
 						remaining
 					</span>
 				</div>
-				<div className="flex flex-1 flex-col items-center rounded-lg bg-card p-3 ring-1 ring-border">
-					<span className="font-mono text-lg font-bold text-foreground">
+				<div key={`open-${100 - pool.squares.flat().filter((s) => s.claimedBy).length}`} className="flex flex-1 flex-col items-center rounded-lg bg-card p-3 ring-1 ring-border animate-highlight">
+					<span className="font-mono text-lg font-bold tabular-nums text-foreground">
 						{100 - pool.squares.flat().filter((s) => s.claimedBy).length}
 					</span>
 					<span className="text-[10px] font-medium text-muted-foreground">

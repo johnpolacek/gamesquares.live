@@ -94,6 +94,19 @@ export const createPool = mutation({
 });
 
 /**
+ * Get the total number of pools created.
+ * Used on the homepage for a real-time counter.
+ */
+export const getPoolCount = query({
+	args: {},
+	returns: v.number(),
+	handler: async (ctx) => {
+		const pools = await ctx.db.query("pools").collect();
+		return pools.length;
+	},
+});
+
+/**
  * Get a pool by slug with all squares and participants.
  * Used for both admin and player views.
  */
