@@ -56,7 +56,6 @@ llm-convex.txt
 
 # Convex
 .convex/
-convex/_generated/
 .env.local
 
 # clerk configuration (can include secrets)
