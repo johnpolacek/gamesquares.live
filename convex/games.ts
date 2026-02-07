@@ -70,6 +70,21 @@ export const setScoresManual = mutation({
 		if (!expected || args.adminSecret !== expected) {
 			return { ok: false, error: "Unauthorized" };
 		}
+		// Validate score range: each score must be 0–99
+		for (const q of args.quarters) {
+			if (q.rowTeamScore < 0 || q.rowTeamScore > 99) {
+				return {
+					ok: false,
+					error: `${q.label} row score must be 0–99 (got ${q.rowTeamScore}).`,
+				};
+			}
+			if (q.colTeamScore < 0 || q.colTeamScore > 99) {
+				return {
+					ok: false,
+					error: `${q.label} col score must be 0–99 (got ${q.colTeamScore}).`,
+				};
+			}
+		}
 		const now = Date.now();
 		await ctx.db.insert("games", {
 			name: args.name,

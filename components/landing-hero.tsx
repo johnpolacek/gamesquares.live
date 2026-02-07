@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { PlusIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -7,6 +8,20 @@ const squareOptions = [1, 2, 4, 5, 10];
 const CREATED_AT_KEY = "gamesquares_pool_created_at";
 const DEV_POOL_LINK_KEY = "gamesquares_dev_pool_link";
 const COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes
+
+function FooterLinks() {
+	return (
+		<footer className="flex justify-center gap-4 pt-8 text-xs text-muted-foreground">
+			<Link href="/privacy" className="hover:text-foreground underline">
+				Privacy Policy
+			</Link>
+			<span>&middot;</span>
+			<Link href="/terms" className="hover:text-foreground underline">
+				Terms of Use
+			</Link>
+		</footer>
+	);
+}
 
 export function LandingHero() {
 	const [step, setStep] = useState<"hero" | "configure" | "success">("hero");
@@ -141,6 +156,7 @@ export function LandingHero() {
 							</a>
 						</div>
 					)}
+					<FooterLinks />
 				</div>
 			</main>
 		);
@@ -185,6 +201,7 @@ export function LandingHero() {
 							Create another pool
 						</button>
 					)}
+					<FooterLinks />
 				</div>
 			</main>
 		);
@@ -316,6 +333,7 @@ export function LandingHero() {
 					>
 						{loading ? "Creating…" : "Create Pool"}
 					</button>
+					<FooterLinks />
 				</div>
 			</main>
 		);
@@ -389,6 +407,7 @@ export function LandingHero() {
 				<p className="text-sm text-muted-foreground">
 					No account needed. Create and share in seconds.
 				</p>
+				<FooterLinks />
 			</div>
 		</main>
 	);

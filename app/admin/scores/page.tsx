@@ -1,34 +1,121 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 const QUARTERS = ["Q1", "Q2", "Q3", "Q4"] as const;
 
+type QuarterState = Record<
+	string,
+	{ rowTeamScore: number; colTeamScore: number; complete: boolean }
+>;
+
+function defaultQuarters(): QuarterState {
+	return Object.fromEntries(
+		QUARTERS.map((q) => [
+			q,
+			{ rowTeamScore: 0, colTeamScore: 0, complete: false },
+		]),
+	) as QuarterState;
+}
+
+/** Format a timestamp as a relative "X ago" string */
+function timeAgo(ts: number): string {
+	const diff = Date.now() - ts;
+	const seconds = Math.floor(diff / 1000);
+	if (seconds < 60) return "just now";
+	const minutes = Math.floor(seconds / 60);
+	if (minutes < 60) return `${minutes}m ago`;
+	const hours = Math.floor(minutes / 60);
+	if (hours < 24) return `${hours}h ago`;
+	const days = Math.floor(hours / 24);
+	return `${days}d ago`;
+}
+
+/** Validate all quarter scores are integers in 0–99 */
+function validateScores(
+	quarters: QuarterState,
+): { valid: true } | { valid: false; error: string } {
+	for (const q of QUARTERS) {
+		const { rowTeamScore, colTeamScore } = quarters[q];
+		for (const [label, value] of [
+			["Row", rowTeamScore],
+			["Col", colTeamScore],
+		] as const) {
+			if (!Number.isInteger(value) || value < 0 || value > 99) {
+				return {
+					valid: false,
+					error: `${q} ${label} score must be an integer between 0 and 99 (got ${value}).`,
+				};
+			}
+		}
+	}
+	return { valid: true };
+}
+
 export default function GlobalScoresAdminPage() {
+	const gameData = useQuery(api.games.getCurrentGame, {});
+
 	const [secret, setSecret] = useState("");
 	const [name, setName] = useState("Global Game");
-	const [quarters, setQuarters] = useState<
-		Record<
-			string,
-			{ rowTeamScore: number; colTeamScore: number; complete: boolean }
-		>
-	>(() =>
-		Object.fromEntries(
-			QUARTERS.map((q) => [
-				q,
-				{ rowTeamScore: 0, colTeamScore: 0, complete: false },
-			]),
-		),
-	);
+	const [quarters, setQuarters] = useState<QuarterState>(defaultQuarters);
 	const [gameComplete, setGameComplete] = useState(false);
 	const [status, setStatus] = useState<
 		"idle" | "loading" | "success" | "error"
 	>("idle");
 	const [message, setMessage] = useState("");
+	const [showConfirm, setShowConfirm] = useState(false);
 
-	async function handleSubmit(e: React.FormEvent) {
-		e.preventDefault();
+	// Track whether we've synced form state from the current game at least once
+	const hasSyncedRef = useRef(false);
+
+	// When the current game loads for the first time, populate the form
+	useEffect(() => {
+		if (hasSyncedRef.current) return;
+		if (!gameData) return; // query still loading
+		if (gameData.found) {
+			const g = gameData.game;
+			setName(g.name);
+			setGameComplete(g.gameComplete ?? false);
+			const q: QuarterState = defaultQuarters();
+			for (const gq of g.quarters) {
+				if (gq.label in q) {
+					q[gq.label] = {
+						rowTeamScore: gq.rowTeamScore,
+						colTeamScore: gq.colTeamScore,
+						complete: gq.complete ?? false,
+					};
+				}
+			}
+			setQuarters(q);
+		}
+		hasSyncedRef.current = true;
+	}, [gameData]);
+
+	/** Check whether form values differ from the current live game */
+	function hasChanges(): boolean {
+		if (!gameData?.found) return true; // no live game — always allow
+		const g = gameData.game;
+		if (name.trim() !== g.name) return true;
+		if (gameComplete !== (g.gameComplete ?? false)) return true;
+		for (const q of QUARTERS) {
+			const live = g.quarters.find((gq) => gq.label === q);
+			const form = quarters[q];
+			if (!live) {
+				if (form.rowTeamScore !== 0 || form.colTeamScore !== 0 || form.complete)
+					return true;
+			} else {
+				if (form.rowTeamScore !== live.rowTeamScore) return true;
+				if (form.colTeamScore !== live.colTeamScore) return true;
+				if (form.complete !== (live.complete ?? false)) return true;
+			}
+		}
+		return false;
+	}
+
+	async function doSubmit() {
 		setStatus("loading");
 		setMessage("");
 		try {
@@ -78,6 +165,34 @@ export default function GlobalScoresAdminPage() {
 		}
 	}
 
+	function handleSubmit(e: React.FormEvent) {
+		e.preventDefault();
+
+		// Client-side validation
+		const validation = validateScores(quarters);
+		if (!validation.valid) {
+			setStatus("error");
+			setMessage(validation.error);
+			return;
+		}
+
+		// Overwrite confirmation when a live game exists and form has changes
+		if (gameData?.found && hasChanges()) {
+			setShowConfirm(true);
+			return;
+		}
+
+		doSubmit();
+	}
+
+	function handleReset() {
+		setQuarters(defaultQuarters());
+		setGameComplete(false);
+		setName("Test Run");
+		setStatus("idle");
+		setMessage("");
+	}
+
 	return (
 		<main className="min-h-dvh bg-background px-6 py-12">
 			<div className="mx-auto max-w-md space-y-8">
@@ -87,9 +202,55 @@ export default function GlobalScoresAdminPage() {
 						href="/"
 						className="text-sm text-muted-foreground hover:text-foreground"
 					>
-						← Home
+						&larr; Home
 					</Link>
 				</div>
+
+				{/* ── Current game summary ── */}
+				{gameData?.found && (
+					<div className="rounded-md border border-border bg-muted/40 p-4 space-y-2">
+						<div className="flex items-center justify-between">
+							<h2 className="text-sm font-semibold text-foreground">
+								Live Game
+							</h2>
+							<span className="text-xs text-muted-foreground">
+								Updated {timeAgo(gameData.game.updatedAt)}
+							</span>
+						</div>
+						<p className="text-sm text-foreground font-medium">
+							{gameData.game.name}
+							{gameData.game.gameComplete && (
+								<span className="ml-2 inline-block rounded bg-primary/15 px-1.5 py-0.5 text-xs font-semibold text-primary">
+									Final
+								</span>
+							)}
+						</p>
+						<div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+							{gameData.game.quarters.map((q) => (
+								<span key={q.label}>
+									<span className="font-medium text-foreground">{q.label}</span>{" "}
+									{q.rowTeamScore}&ndash;{q.colTeamScore}
+									{q.complete && (
+										<span className="ml-0.5 text-primary font-semibold">
+											F
+										</span>
+									)}
+								</span>
+							))}
+						</div>
+					</div>
+				)}
+
+				{!gameData && (
+					<p className="text-sm text-muted-foreground">Loading game data...</p>
+				)}
+				{gameData && !gameData.found && (
+					<p className="text-sm text-muted-foreground">
+						No game has been set yet. Fill in the form below to create one.
+					</p>
+				)}
+
+				{/* ── Form ── */}
 				<form onSubmit={handleSubmit} className="space-y-6">
 					<div>
 						<label
@@ -141,6 +302,7 @@ export default function GlobalScoresAdminPage() {
 												id={`${q}-row`}
 												type="number"
 												min={0}
+												max={99}
 												value={quarters[q]?.rowTeamScore ?? 0}
 												onChange={(e) =>
 													setQuarters((prev) => ({
@@ -163,6 +325,7 @@ export default function GlobalScoresAdminPage() {
 												id={`${q}-col`}
 												type="number"
 												min={0}
+												max={99}
 												value={quarters[q]?.colTeamScore ?? 0}
 												onChange={(e) =>
 													setQuarters((prev) => ({
@@ -201,8 +364,8 @@ export default function GlobalScoresAdminPage() {
 						</div>
 						<p className="text-xs text-muted-foreground">
 							Row = first team (e.g. row numbers), Col = second team (e.g.
-							column numbers). Check &quot;Final&quot; when a quarter is
-							complete.
+							column numbers). Scores must be 0&ndash;99. Check &quot;Final&quot;
+							when a quarter is complete.
 						</p>
 					</div>
 
@@ -236,15 +399,59 @@ export default function GlobalScoresAdminPage() {
 							{message}
 						</p>
 					)}
-					<button
-						type="submit"
-						disabled={status === "loading"}
-						className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-					>
-						{status === "loading" ? "Saving…" : "Save scores"}
-					</button>
+
+					<div className="flex gap-3">
+						<button
+							type="submit"
+							disabled={status === "loading"}
+							className="flex-1 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+						>
+							{status === "loading" ? "Saving\u2026" : "Save scores"}
+						</button>
+						<button
+							type="button"
+							onClick={handleReset}
+							className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
+						>
+							Reset to zeros
+						</button>
+					</div>
 				</form>
 			</div>
+
+			{/* ── Overwrite confirmation dialog ── */}
+			{showConfirm && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+					<div className="mx-4 w-full max-w-sm rounded-lg border border-border bg-background p-6 shadow-lg space-y-4">
+						<h3 className="text-base font-semibold text-foreground">
+							Update live game?
+						</h3>
+						<p className="text-sm text-muted-foreground">
+							You&apos;re about to change the live game scores. All pools will
+							see the new scores immediately.
+						</p>
+						<div className="flex justify-end gap-3">
+							<button
+								type="button"
+								onClick={() => setShowConfirm(false)}
+								className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
+							>
+								Cancel
+							</button>
+							<button
+								type="button"
+								onClick={() => {
+									setShowConfirm(false);
+									doSubmit();
+								}}
+								className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+							>
+								Continue
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 		</main>
 	);
 }

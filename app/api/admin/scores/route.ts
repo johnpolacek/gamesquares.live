@@ -47,6 +47,24 @@ export async function POST(request: Request) {
 			);
 		}
 
+		// Validate score range: each score must be an integer 0–99
+		for (const q of quarters) {
+			for (const [field, label] of [
+				["rowTeamScore", "Row"],
+				["colTeamScore", "Col"],
+			] as const) {
+				const val = q[field];
+				if (!Number.isInteger(val) || val < 0 || val > 99) {
+					return NextResponse.json(
+						{
+							error: `${q.label} ${label} score must be an integer between 0 and 99 (got ${val}).`,
+						},
+						{ status: 400 },
+					);
+				}
+			}
+		}
+
 		const result = await fetchMutation(api.games.setScoresManual, {
 			adminSecret: secret,
 			name,

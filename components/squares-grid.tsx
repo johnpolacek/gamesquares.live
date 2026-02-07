@@ -24,22 +24,22 @@ const QUARTER_COLORS: Record<
 	{ ring: string; bg: string; badge: string }
 > = {
 	Q1: {
-		ring: "oklch(0.60 0.20 145)",   // green
+		ring: "oklch(0.60 0.20 145)", // green
 		bg: "oklch(0.60 0.20 145 / 0.12)",
 		badge: "oklch(0.45 0.15 145)",
 	},
 	Q2: {
-		ring: "oklch(0.55 0.20 260)",   // blue
+		ring: "oklch(0.55 0.20 260)", // blue
 		bg: "oklch(0.55 0.20 260 / 0.12)",
 		badge: "oklch(0.42 0.15 260)",
 	},
 	Q3: {
-		ring: "oklch(0.60 0.22 25)",    // orange/red
+		ring: "oklch(0.60 0.22 25)", // orange/red
 		bg: "oklch(0.60 0.22 25 / 0.12)",
 		badge: "oklch(0.48 0.18 25)",
 	},
 	Q4: {
-		ring: "oklch(0.65 0.18 85)",    // gold
+		ring: "oklch(0.65 0.18 85)", // gold
 		bg: "oklch(0.65 0.18 85 / 0.15)",
 		badge: "oklch(0.50 0.15 85)",
 	},
@@ -151,10 +151,9 @@ export function SquaresGrid({
 								const squareKey = `${square.row},${square.col}`;
 								const winnerInfo = winningByKey.get(squareKey);
 								const isCurrentScoreSquare = currentScoreKey === squareKey;
-								const qColor =
-									winnerInfo
-										? (QUARTER_COLORS[winnerInfo.quarter] ?? DEFAULT_Q_COLOR)
-										: null;
+								const qColor = winnerInfo
+									? (QUARTER_COLORS[winnerInfo.quarter] ?? DEFAULT_Q_COLOR)
+									: null;
 
 								return (
 									<button
@@ -163,14 +162,22 @@ export function SquaresGrid({
 										disabled={!canClick}
 										style={
 											winnerInfo && qColor
-												? { background: qColor.bg, boxShadow: `inset 0 0 0 2px ${qColor.ring}` }
+												? {
+														background: qColor.bg,
+														boxShadow: `inset 0 0 0 2px ${qColor.ring}`,
+													}
 												: isCurrentScoreSquare
-													? { background: "oklch(0.92 0.12 90 / 0.3)", boxShadow: "inset 0 0 0 2px oklch(0.75 0.12 85)" }
+													? {
+															background: "oklch(0.92 0.12 90 / 0.3)",
+															boxShadow: "inset 0 0 0 2px oklch(0.75 0.12 85)",
+														}
 													: undefined
 										}
 										className={`relative flex aspect-square flex-col items-center justify-center gap-0.5 overflow-hidden border-[0.5px] border-border/40 transition-all ${
 											!winnerInfo && !isCurrentScoreSquare
-												? isClaimed ? "bg-white" : "bg-card"
+												? isClaimed
+													? "bg-white"
+													: "bg-card"
 												: ""
 										} ${
 											canClick
@@ -186,14 +193,14 @@ export function SquaresGrid({
 												: `Empty square at row ${square.row + 1}, column ${square.col + 1}`
 										}
 									>
-									{winnerInfo && qColor && (
-										<span
-											className="absolute right-0.5 top-0.5 rounded px-1 text-[6px] font-bold text-white"
-											style={{ background: qColor.badge }}
-										>
-											{winnerInfo.label}
-										</span>
-									)}
+										{winnerInfo && qColor && (
+											<span
+												className="absolute right-0 top-0 px-0.5 text-[5px] font-normal text-white"
+												style={{ background: qColor.badge }}
+											>
+												{winnerInfo.label}
+											</span>
+										)}
 										{isCurrentScoreSquare && !winnerInfo && (
 											<span className="absolute right-0.5 top-0.5 rounded bg-[oklch(0.55_0.15_85)] px-1 text-[6px] font-bold text-white">
 												★
@@ -203,8 +210,8 @@ export function SquaresGrid({
 											<>
 												<GraphicIcon
 													graphic={square.claimedBy.graphic}
-													className="text-[8px] leading-none md:text-[10px] [&>svg]:h-2.5 [&>svg]:w-2.5 md:[&>svg]:h-3 md:[&>svg]:w-3 [&_svg]:stroke-foreground"
-													size={12}
+													className="text-[8px] relative top-0.5 leading-none h-3 w-3 flex items-center justify-center overflow-hidden [&>svg]:h-2.5 [&>svg]:w-2.5 [&_svg]:stroke-foreground"
+													size={10}
 												/>
 												<span className="line-clamp-2 w-full px-0.5 text-center text-[5px] font-normal leading-tight md:text-[6px]">
 													{square.claimedBy.name}
