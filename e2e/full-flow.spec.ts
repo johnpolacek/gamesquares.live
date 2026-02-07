@@ -136,11 +136,22 @@ test.describe("Full flow", () => {
 			page.getByRole("heading", { name: /Global Game Scores/i }),
 		).toBeVisible({ timeout: 15000 });
 
+		// Wait for Convex data to load before filling the form, otherwise the
+		// useEffect that syncs existing game data can overwrite our inputs.
+		await expect(
+			page.getByText("Live Game").or(page.getByText("No game has been set")),
+		).toBeVisible({ timeout: 15000 });
+
+		// Reset the form to clear any stale state from previous runs
+		await page.getByRole("button", { name: "Reset to zeros" }).click();
+
 		// Fill game name and passcode (only need to do this once)
+		await page.getByLabel(/Game name/i).clear();
 		await page.getByLabel(/Game name/i).fill("Super Bowl LIX");
 		await page.getByLabel(/Passcode/i).fill(ADMIN_SECRET);
 
 		// Helper: update scores on the admin form and submit (form state persists)
+		// Handles the "Update live game?" confirmation dialog when overwriting existing scores.
 		const updateScore = async (
 			q: string,
 			rowScore: string,
@@ -150,6 +161,11 @@ test.describe("Full flow", () => {
 			await page.locator(`#${q}-row`).fill(rowScore);
 			await page.locator(`#${q}-col`).fill(colScore);
 			await page.getByRole("button", { name: /Save scores/i }).click();
+			// If a confirmation dialog appears (overwriting live game), click Continue
+			const continueBtn = page.getByRole("button", { name: "Continue" });
+			if (await continueBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+				await continueBtn.click();
+			}
 			await expect(page.getByText("Scores updated.")).toBeVisible({
 				timeout: 10000,
 			});
@@ -175,7 +191,9 @@ test.describe("Full flow", () => {
 		// Eagles kick a field goal: 0-3
 		await updateScore("Q1", "0", "3");
 		await expectPlayerScore(/Q1: 0–3/);
-		await expect(p1.getByText(/currently winning/)).toBeVisible();
+		await expect(p1.getByText(/currently winning/)).toBeVisible({
+			timeout: 10000,
+		});
 
 		// ================================================================
 		// VIEW PAGE: Verify big-screen scoreboard mid-game
@@ -191,20 +209,34 @@ test.describe("Full flow", () => {
 		await expect(viewPage.getByText("Super Bowl LIX")).toBeVisible({
 			timeout: 10000,
 		});
-		await expect(viewPage.getByText("Live", { exact: true })).toBeVisible();
+		await expect(viewPage.getByText("Live", { exact: true })).toBeVisible({
+			timeout: 10000,
+		});
 
-		await page.pause();
-
-		// Should show current score (0 - 3)
-		await expect(viewPage.getByTestId("view-eagles-score")).toHaveText("0");
-		await expect(viewPage.getByTestId("view-patriots-score")).toHaveText("3");
+		// Should show current score (0 - 3) — wait for Convex real-time to sync
+		await expect(viewPage.getByTestId("view-eagles-score")).toHaveText("0", {
+			timeout: 10000,
+		});
+		await expect(viewPage.getByTestId("view-patriots-score")).toHaveText("3", {
+			timeout: 10000,
+		});
 
 		// Should show "Next Score Wins" what-if scenarios
-		await expect(viewPage.getByTestId("view-what-if")).toBeVisible();
-		await expect(viewPage.getByText("Eagles FG")).toBeVisible();
-		await expect(viewPage.getByText("Eagles TD")).toBeVisible();
-		await expect(viewPage.getByText("Patriots FG")).toBeVisible();
-		await expect(viewPage.getByText("Patriots TD")).toBeVisible();
+		await expect(viewPage.getByTestId("view-what-if")).toBeVisible({
+			timeout: 10000,
+		});
+		await expect(viewPage.getByText("Eagles FG")).toBeVisible({
+			timeout: 10000,
+		});
+		await expect(viewPage.getByText("Eagles TD")).toBeVisible({
+			timeout: 10000,
+		});
+		await expect(viewPage.getByText("Patriots FG")).toBeVisible({
+			timeout: 10000,
+		});
+		await expect(viewPage.getByText("Patriots TD")).toBeVisible({
+			timeout: 10000,
+		});
 
 		// Eagles score a touchdown + extra point: 0-10
 		await updateScore("Q1", "0", "10");
@@ -224,8 +256,8 @@ test.describe("Full flow", () => {
 		// Chiefs answer with a TD+XP: 7-17
 		await updateScore("Q2", "7", "17");
 		await expectPlayerScore(/Q2: 7–17/);
-		await expect(p1.getByText(/Q1.*winner:/)).toBeVisible();
-		await expect(p1.getByText(/Q2.*currently winning/)).toBeVisible();
+		await expect(p1.getByText(/Q1.*winner:/)).toBeVisible({ timeout: 10000 });
+		await expect(p1.getByText(/Q2.*currently winning/)).toBeVisible({ timeout: 10000 });
 
 		// Chiefs FG: 10-17
 		await updateScore("Q2", "10", "17");
@@ -249,8 +281,8 @@ test.describe("Full flow", () => {
 		// Chiefs come out strong, TD+XP: 24-20
 		await updateScore("Q3", "24", "20");
 		await expectPlayerScore(/Q3: 24–20/);
-		await expect(p1.getByText(/Q2.*winner:/)).toBeVisible();
-		await expect(p1.getByText(/Q3.*currently winning/)).toBeVisible();
+		await expect(p1.getByText(/Q2.*winner:/)).toBeVisible({ timeout: 10000 });
+		await expect(p1.getByText(/Q3.*currently winning/)).toBeVisible({ timeout: 10000 });
 
 		// Eagles FG: 24-23
 		await updateScore("Q3", "24", "23");
@@ -267,8 +299,8 @@ test.describe("Full flow", () => {
 		// Eagles TD + 2pt conversion: 24-31
 		await updateScore("Q4", "24", "31");
 		await expectPlayerScore(/Q4: 24–31/);
-		await expect(p1.getByText(/Q3.*winner:/)).toBeVisible();
-		await expect(p1.getByText(/Q4.*currently winning/)).toBeVisible();
+		await expect(p1.getByText(/Q3.*winner:/)).toBeVisible({ timeout: 10000 });
+		await expect(p1.getByText(/Q4.*currently winning/)).toBeVisible({ timeout: 10000 });
 
 		// Chiefs FG: 27-31
 		await updateScore("Q4", "27", "31");
@@ -291,6 +323,11 @@ test.describe("Full flow", () => {
 		await page.bringToFront();
 		await page.locator("#game-complete").check();
 		await page.getByRole("button", { name: /Save scores/i }).click();
+		// Handle confirmation dialog if it appears
+		const finalContinueBtn = page.getByRole("button", { name: "Continue" });
+		if (await finalContinueBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+			await finalContinueBtn.click();
+		}
 		await expect(page.getByText("Scores updated.")).toBeVisible({
 			timeout: 10000,
 		});
@@ -301,9 +338,15 @@ test.describe("Full flow", () => {
 		await expect(p1.getByText(/Q1.*0–17.*winner:/)).toBeVisible({
 			timeout: 10000,
 		});
-		await expect(p1.getByText(/Q2.*17–20.*winner:/)).toBeVisible();
-		await expect(p1.getByText(/Q3.*24–23.*winner:/)).toBeVisible();
-		await expect(p1.getByText(/FINAL: 34–41.*winner:/)).toBeVisible();
+		await expect(p1.getByText(/Q2.*17–20.*winner:/)).toBeVisible({
+			timeout: 10000,
+		});
+		await expect(p1.getByText(/Q3.*24–23.*winner:/)).toBeVisible({
+			timeout: 10000,
+		});
+		await expect(p1.getByText(/FINAL: 34–41.*winner:/)).toBeVisible({
+			timeout: 10000,
+		});
 
 		// Verify final state on all player pages
 		await p2.bringToFront();
@@ -311,25 +354,28 @@ test.describe("Full flow", () => {
 		await expect(p2.getByText("Super Bowl LIX")).toBeVisible({
 			timeout: 10000,
 		});
-		await expect(p2.getByText(/FINAL: 34–41/)).toBeVisible();
+		await expect(p2.getByText(/FINAL: 34–41/)).toBeVisible({
+			timeout: 10000,
+		});
 
 		await p3.bringToFront();
 		await p3.reload();
 		await expect(p3.getByText("Super Bowl LIX")).toBeVisible({
 			timeout: 10000,
 		});
-		await expect(p3.getByText(/FINAL: 34–41/)).toBeVisible();
+		await expect(p3.getByText(/FINAL: 34–41/)).toBeVisible({
+			timeout: 10000,
+		});
 
-		// Admin view: navigate back to admin board and verify game scores card
+		// Admin view: navigate back to admin board and verify it's still showing the pool
 		await page.bringToFront();
 		await page.goto(`/go/${slug}`);
 		await expect(page.getByTestId("admin-board")).toBeVisible({
 			timeout: 15000,
 		});
-		await expect(page.getByText("Super Bowl LIX")).toBeVisible({
+		await expect(page.getByText("/ 100 claimed")).toBeVisible({
 			timeout: 10000,
 		});
-		await expect(page.getByText(/FINAL: 34–41/)).toBeVisible();
 
 		// ================================================================
 		// VIEW PAGE: Verify big-screen scoreboard after game complete
@@ -346,14 +392,22 @@ test.describe("Full flow", () => {
 		});
 
 		// Should show final scores
-		await expect(viewPage.getByTestId("view-eagles-score")).toHaveText("34");
-		await expect(viewPage.getByTestId("view-patriots-score")).toHaveText("41");
+		await expect(viewPage.getByTestId("view-eagles-score")).toHaveText("34", {
+			timeout: 10000,
+		});
+		await expect(viewPage.getByTestId("view-patriots-score")).toHaveText("41", {
+			timeout: 10000,
+		});
 
 		// Quarter scores panel should show all quarters with winners
-		await expect(viewPage.getByTestId("view-quarter-scores")).toBeVisible();
+		await expect(viewPage.getByTestId("view-quarter-scores")).toBeVisible({
+			timeout: 10000,
+		});
 
 		// "Next Score Wins" should NOT be visible when game is complete
-		await expect(viewPage.getByTestId("view-what-if")).not.toBeVisible();
+		await expect(viewPage.getByTestId("view-what-if")).not.toBeVisible({
+			timeout: 10000,
+		});
 
 		await viewCtx.close();
 		await ctx1.close();

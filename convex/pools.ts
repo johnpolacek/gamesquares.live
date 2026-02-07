@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 
 const SLUG_CHARS = "abcdefghijklmnopqrstuvwxyz0123456789";
 const SLUG_LENGTH = 8;
@@ -285,5 +285,23 @@ export const assignNumbers = mutation({
 		await ctx.db.patch(args.poolId, { rowNumbers, colNumbers });
 
 		return { ok: true as const, rowNumbers, colNumbers };
+	},
+});
+
+/**
+ * Reset global rate-limit counter. Internal-only (not callable from clients).
+ * Useful for testing or manual maintenance.
+ */
+export const resetGlobalLimits = internalMutation({
+	args: {},
+	returns: v.null(),
+	handler: async (ctx) => {
+		const limits = await ctx.db.query("globalLimits").first();
+		if (limits) {
+			await ctx.db.patch(limits._id, {
+				createdCount: 0,
+				windowStart: Date.now(),
+			});
+		}
 	},
 });

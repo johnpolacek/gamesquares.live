@@ -18,8 +18,9 @@ export async function sendAdminLoginEmail({
 	poolLink,
 }: SendAdminLoginEmailParams): Promise<{ ok: boolean; error?: string }> {
 	const resend = getResend();
-	if (!resend) {
-		// Mock: log email content so you can copy the admin link during dev
+	const isDev = process.env.NODE_ENV === "development";
+	if (!resend || isDev) {
+		// Mock: log email content so you can copy the admin link during dev/tests
 		const text = [
 			"Your pool is ready!",
 			"",
