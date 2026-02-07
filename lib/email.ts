@@ -10,12 +10,14 @@ export type SendAdminLoginEmailParams = {
 	to: string;
 	adminLoginLink: string;
 	poolLink: string;
+	viewLink: string;
 };
 
 export async function sendAdminLoginEmail({
 	to,
 	adminLoginLink,
 	poolLink,
+	viewLink,
 }: SendAdminLoginEmailParams): Promise<{ ok: boolean; error?: string }> {
 	const resend = getResend();
 	const isDev = process.env.NODE_ENV === "development";
@@ -29,6 +31,9 @@ export async function sendAdminLoginEmail({
 			"",
 			"Share this link with players to join:",
 			poolLink,
+			"",
+			"View link (put this on a big screen for live updates):",
+			viewLink,
 		].join("\n");
 		console.log("[mock email] To:", to);
 		console.log("[mock email] Content:\n", text);
@@ -46,6 +51,9 @@ export async function sendAdminLoginEmail({
 		"",
 		"Share this link with players to join:",
 		poolLink,
+		"",
+		"View link (put this on a big screen for live updates):",
+		viewLink,
 		"",
 		"Save your admin link — you'll need it to lock the board and assign numbers.",
 	].join("\n");

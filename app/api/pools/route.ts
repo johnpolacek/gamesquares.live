@@ -92,11 +92,13 @@ export async function POST(request: Request) {
 			request.url.replace(/\/api\/pools.*$/, "");
 		const adminLoginLink = `${origin}${ROUTES.ADMIN_LOGIN_PREFIX}?token=${rawToken}`;
 		const poolLink = `${origin}${ROUTES.PLAY_PREFIX}${slug}`;
+		const viewLink = `${origin}${ROUTES.VIEW_PREFIX}${slug}`;
 
 		const result = await sendAdminLoginEmail({
 			to: adminEmail,
 			adminLoginLink,
 			poolLink,
+			viewLink,
 		});
 
 		if (!result.ok) {
