@@ -74,17 +74,12 @@ export const getCurrentGame = query({
  */
 export const setScoresManual = mutation({
 	args: {
-		adminSecret: v.string(),
 		name: v.string(),
 		quarters: v.array(quarterValidator),
 		gameComplete: v.optional(v.boolean()),
 	},
 	returns: v.object({ ok: v.boolean(), error: v.optional(v.string()) }),
 	handler: async (ctx, args) => {
-		const expected = process.env.GLOBAL_ADMIN_SECRET;
-		if (!expected || args.adminSecret !== expected) {
-			return { ok: false, error: "Unauthorized" };
-		}
 		// Validate score range: each score must be 0–99
 		for (const q of args.quarters) {
 			if (q.rowTeamScore < 0 || q.rowTeamScore > 99) {

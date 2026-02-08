@@ -34,10 +34,11 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// Create response with redirect URL
+		// Create response with redirect URL and pool title
 		const response = NextResponse.json({
 			success: true,
 			slug: result.slug,
+			title: result.title,
 			redirectUrl: `/go/${result.slug}`,
 		});
 

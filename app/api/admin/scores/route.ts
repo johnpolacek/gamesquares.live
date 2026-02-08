@@ -76,7 +76,6 @@ export async function POST(request: Request) {
 		}
 
 		const result = await fetchMutation(api.games.setScoresManual, {
-			adminSecret: secret,
 			name,
 			quarters,
 			gameComplete,

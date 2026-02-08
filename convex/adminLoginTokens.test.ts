@@ -37,6 +37,7 @@ describe("adminLoginTokens", () => {
 		expect(result.success).toBe(true);
 		if (result.success) {
 			expect(result.slug).toBe(slug);
+			expect(result.title).toBe("Pool");
 			expect(result.poolId).toBe(poolId);
 		}
 	});

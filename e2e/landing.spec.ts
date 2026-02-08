@@ -6,7 +6,7 @@ test.describe("Landing", () => {
 		await expect(page.getByTestId("landing-create-pool-cta")).toBeVisible({
 			timeout: 15000,
 		});
-		await expect(page.getByText("GameSquares", { exact: true })).toBeVisible();
+		await expect(page.getByRole("heading", { name: /GameSquares/i })).toBeVisible();
 	});
 
 	test("create pool flow: configure and submit shows success", async ({
@@ -16,7 +16,6 @@ test.describe("Landing", () => {
 		// Clear any prior pool creation so we see the hero CTA
 		await page.evaluate(() => {
 			localStorage.removeItem("gamesquares_pool_created_at");
-			localStorage.removeItem("gamesquares_created_pool_slug");
 			localStorage.removeItem("gamesquares_dev_pool_link");
 		});
 		await page.reload();
@@ -46,7 +45,6 @@ test.describe("Landing", () => {
 		// Clear any prior pool creation
 		await page.evaluate(() => {
 			localStorage.removeItem("gamesquares_pool_created_at");
-			localStorage.removeItem("gamesquares_created_pool_slug");
 			localStorage.removeItem("gamesquares_dev_pool_link");
 		});
 		await page.reload();

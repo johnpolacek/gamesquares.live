@@ -17,7 +17,7 @@ Set `GLOBAL_ADMIN_SECRET` in **two** places (same value):
 1. **Vercel** (or your host): Project Settings > Environment Variables. Also add it to `.env.local` for local dev.
 2. **Convex dashboard**: Deployment > Settings > Environment Variables.
 
-Both are needed because the Next.js API routes check the secret server-side, and the Convex `setScoresManual` mutation also validates it.
+Both are needed because the Next.js API routes check the secret server-side, and other Convex actions (e.g. ESPN feed diagnostic) also validate it.
 
 ### 2. Admin dashboard
 

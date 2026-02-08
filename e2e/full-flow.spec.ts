@@ -6,7 +6,7 @@ import { expect, test } from "@playwright/test";
  * then play through all 4 quarters using the admin scores UI and verify winner display.
  */
 
-const ADMIN_SECRET = "e2e-test-secret";
+const ADMIN_SECRET = process.env.GLOBAL_ADMIN_SECRET ?? "e2e-test-secret";
 
 test.describe("Full flow", () => {
 	test("admin creates pool, players claim, distribute, assign numbers, play full game", async ({
@@ -129,26 +129,24 @@ test.describe("Full flow", () => {
 		// 7. GAME: Play through all 4 quarters via admin scores UI
 		// ================================================================
 
-		// Open the admin scores page once; form state persists between submissions
+		// Open the admin page and authenticate
 		await page.bringToFront();
-		await page.goto("/admin/scores");
+		await page.goto("/admin");
 		await expect(
-			page.getByRole("heading", { name: /Global Game Scores/i }),
+			page.getByRole("heading", { name: /Admin/i }),
 		).toBeVisible({ timeout: 15000 });
+		await page.getByLabel(/Admin Passcode/i).fill(ADMIN_SECRET);
+		await page.getByRole("button", { name: /Sign In/i }).click();
 
-		// Wait for Convex data to load before filling the form, otherwise the
-		// useEffect that syncs existing game data can overwrite our inputs.
-		await expect(
-			page.getByText("Live Game").or(page.getByText("No game has been set")),
-		).toBeVisible({ timeout: 15000 });
+		// Wait for the authenticated dashboard and Convex data to load
+		await expect(page.getByLabel(/Game name/i)).toBeVisible({ timeout: 15000 });
 
 		// Reset the form to clear any stale state from previous runs
 		await page.getByRole("button", { name: "Reset to zeros" }).click();
 
-		// Fill game name and passcode (only need to do this once)
+		// Fill game name (passcode already handled by auth above)
 		await page.getByLabel(/Game name/i).clear();
 		await page.getByLabel(/Game name/i).fill("Super Bowl LIX");
-		await page.getByLabel(/Passcode/i).fill(ADMIN_SECRET);
 
 		// Helper: update scores on the admin form and submit (form state persists)
 		// Handles the "Update live game?" confirmation dialog when overwriting existing scores.
@@ -297,41 +295,29 @@ test.describe("Full flow", () => {
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 		// Eagles TD + 2pt conversion: 24-31
+		// Note: Q4 scores auto-mark gameComplete, so player view shows "FINAL" not "Q4"
 		await updateScore("Q4", "24", "31");
-		await expectPlayerScore(/Q4: 24–31/);
+		await expectPlayerScore(/FINAL: 24–31/);
 		await expect(p1.getByText(/Q3.*winner:/)).toBeVisible({ timeout: 10000 });
-		await expect(p1.getByText(/Q4.*currently winning/)).toBeVisible({ timeout: 10000 });
+		await expect(p1.getByText(/FINAL.*winner:/)).toBeVisible({ timeout: 10000 });
 
 		// Chiefs FG: 27-31
 		await updateScore("Q4", "27", "31");
-		await expectPlayerScore(/Q4: 27–31/);
+		await expectPlayerScore(/FINAL: 27–31/);
 
 		// Chiefs TD+XP to take the lead: 34-31
 		await updateScore("Q4", "34", "31");
-		await expectPlayerScore(/Q4: 34–31/);
+		await expectPlayerScore(/FINAL: 34–31/);
 
 		// Eagles FG to tie: 34-34
 		await updateScore("Q4", "34", "34");
-		await expectPlayerScore(/Q4: 34–34/);
+		await expectPlayerScore(/FINAL: 34–34/);
 
 		// Eagles TD+XP for the win!: 34-41
 		await updateScore("Q4", "34", "41");
-		await expectPlayerScore(/Q4: 34–41/);
+		await expectPlayerScore(/FINAL: 34–41/);
 
-		// --- Mark Q4 complete and game complete ---
-		await markQuarterComplete("Q4");
-		await page.bringToFront();
-		await page.locator("#game-complete").check();
-		await page.getByRole("button", { name: /Save scores/i }).click();
-		// Handle confirmation dialog if it appears
-		const finalContinueBtn = page.getByRole("button", { name: "Continue" });
-		if (await finalContinueBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
-			await finalContinueBtn.click();
-		}
-		await expect(page.getByText("Scores updated.")).toBeVisible({
-			timeout: 10000,
-		});
-
+		// Q4 scores auto-derive gameComplete, so no manual marking needed.
 		// Player view: game complete → all show "winner", last quarter is "FINAL"
 		await p1.bringToFront();
 		await p1.reload();

@@ -2,6 +2,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
+import { addPoolToHistory } from "@/lib/pool-history";
 
 function GoPageContent() {
 	const searchParams = useSearchParams();
@@ -28,6 +29,15 @@ function GoPageContent() {
 				const result = await response.json();
 
 				if (result.success) {
+					// Upgrade pool history entry to admin role now that email is verified
+					if (result.slug) {
+						addPoolToHistory({
+							slug: result.slug,
+							title: result.title || result.slug,
+							role: "admin",
+							joinedAt: Date.now(),
+						});
+					}
 					// Redirect to admin page (cookie is already set by API)
 					router.replace(result.redirectUrl);
 				} else {

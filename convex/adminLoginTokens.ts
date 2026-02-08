@@ -31,7 +31,7 @@ export const validateToken = mutation({
 		tokenHash: v.string(),
 	},
 	returns: v.union(
-		v.object({ success: v.literal(true), slug: v.string(), poolId: v.id("pools") }),
+		v.object({ success: v.literal(true), slug: v.string(), title: v.string(), poolId: v.id("pools") }),
 		v.object({ success: v.literal(false), error: v.string() }),
 	),
 	handler: async (ctx, args) => {
@@ -54,6 +54,6 @@ export const validateToken = mutation({
 			return { success: false as const, error: "Pool not found" };
 		}
 
-		return { success: true as const, slug: pool.slug, poolId: pool._id };
+		return { success: true as const, slug: pool.slug, title: pool.title, poolId: pool._id };
 	},
 });

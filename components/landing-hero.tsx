@@ -8,7 +8,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { api } from "@/convex/_generated/api";
 import {
-	addPoolToHistory,
 	getPoolHistory,
 	type PoolHistoryEntry,
 	removePoolFromHistory,
@@ -21,7 +20,6 @@ type SponsorConfig = {
 
 const squareOptions = [1, 2, 4, 5, 10];
 const CREATED_AT_KEY = "gamesquares_pool_created_at";
-const CREATED_POOL_SLUG_KEY = "gamesquares_created_pool_slug";
 const DEV_POOL_LINK_KEY = "gamesquares_dev_pool_link";
 const COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes
 
@@ -33,16 +31,11 @@ type MergedPool = {
 	joinedAt: number;
 };
 
-function mergePoolsBySlug(
-	pools: PoolHistoryEntry[],
-	createdPoolSlug: string | null,
-	/** When true (user has createdAt but no stored slug), treat single pool as created by user (legacy fallback) */
-	singlePoolAsCreator: boolean,
-): MergedPool[] {
+function mergePoolsBySlug(pools: PoolHistoryEntry[]): MergedPool[] {
 	const bySlug = new Map<string, MergedPool>();
 	for (const entry of pools) {
 		const existing = bySlug.get(entry.slug);
-		const isAdmin = entry.role === "admin" || entry.slug === createdPoolSlug;
+		const isAdmin = entry.role === "admin";
 		if (!existing) {
 			bySlug.set(entry.slug, {
 				slug: entry.slug,
@@ -58,31 +51,18 @@ function mergePoolsBySlug(
 			});
 		}
 	}
-	let merged = [...bySlug.values()].sort((a, b) => b.joinedAt - a.joinedAt);
-	// Legacy: user created a pool before we stored createdPoolSlug; they have only one pool and it's shown as Player → treat as creator
-	if (singlePoolAsCreator && merged.length === 1 && !merged[0].isAdmin) {
-		merged = [{ ...merged[0], isAdmin: true }];
-	}
+	const merged = [...bySlug.values()].sort((a, b) => b.joinedAt - a.joinedAt);
 	return merged;
 }
 
 function YourPools({
 	pools,
-	createdPoolSlug,
-	hasCreatedPoolNoSlug,
 	onRemove,
 }: {
 	pools: PoolHistoryEntry[];
-	createdPoolSlug?: string | null;
-	/** True when user has createdAt (so we show "You already created") but no stored createdPoolSlug (legacy) */
-	hasCreatedPoolNoSlug?: boolean;
 	onRemove: (slug: string) => void;
 }) {
-	const merged = mergePoolsBySlug(
-		pools,
-		createdPoolSlug ?? null,
-		hasCreatedPoolNoSlug ?? false,
-	);
+	const merged = mergePoolsBySlug(pools);
 	if (merged.length === 0) return null;
 	if (
 		process.env.NODE_ENV === "development" &&
@@ -91,24 +71,12 @@ function YourPools({
 			localStorage.getItem("gamesquares_debug_pools") === "1")
 	) {
 		console.log("[YourPools] debug", {
-			createdPoolSlug: createdPoolSlug ?? null,
-			hasCreatedPoolNoSlug: hasCreatedPoolNoSlug ?? false,
 			poolHistory: pools,
 			merged: merged.map((p) => ({
 				slug: p.slug,
 				title: p.title,
 				isAdmin: p.isAdmin,
 			})),
-			localStorage: {
-				createdAt:
-					typeof localStorage !== "undefined"
-						? localStorage.getItem(CREATED_AT_KEY)
-						: null,
-				createdPoolSlug:
-					typeof localStorage !== "undefined"
-						? localStorage.getItem(CREATED_POOL_SLUG_KEY)
-						: null,
-			},
 		});
 	}
 	return (
@@ -217,7 +185,6 @@ export function LandingHero() {
 	const { executeRecaptcha } = useGoogleReCaptcha();
 	const [step, setStep] = useState<"hero" | "configure" | "success">("hero");
 	const [createdAt, setCreatedAt] = useState<number | null>(null);
-	const [createdPoolSlug, setCreatedPoolSlug] = useState<string | null>(null);
 	const [devPoolLink, setDevPoolLink] = useState<string | null>(null);
 	const [poolHistory, setPoolHistory] = useState<PoolHistoryEntry[]>([]);
 	const [title, setTitle] = useState("");
@@ -244,15 +211,12 @@ export function LandingHero() {
 			const ts = Number.parseInt(raw, 10);
 			if (!Number.isNaN(ts)) setCreatedAt(ts);
 		}
-		const slug = localStorage.getItem(CREATED_POOL_SLUG_KEY);
-		if (slug) setCreatedPoolSlug(slug);
 		const link = localStorage.getItem(DEV_POOL_LINK_KEY);
 		if (link) setDevPoolLink(link);
 		setPoolHistory(getPoolHistory());
 		if (process.env.NODE_ENV === "development") {
 			console.log("[LandingHero] localStorage on mount:", {
 				CREATED_AT_KEY: raw,
-				CREATED_POOL_SLUG_KEY: slug,
 				DEV_POOL_LINK_KEY: link ? `${link.slice(0, 40)}...` : null,
 				hasPoolLink: !!link,
 			});
@@ -349,21 +313,8 @@ export function LandingHero() {
 					setDevPoolLink(data.poolLink);
 				}
 			}
-			// Save to pool history so returning users see their pool on the homepage
-			if (data.slug) {
-				if (typeof window !== "undefined") {
-					localStorage.setItem(CREATED_POOL_SLUG_KEY, data.slug);
-					setCreatedPoolSlug(data.slug);
-				}
-				const entry: PoolHistoryEntry = {
-					slug: data.slug,
-					title: trimmedTitle,
-					role: "admin",
-					joinedAt: now,
-				};
-				addPoolToHistory(entry);
-				setPoolHistory(getPoolHistory());
-			}
+			// Don't add to pool history yet — pool only appears in "Your Pools"
+			// after the user verifies via the email magic link on /go
 			setCreatedAt(now);
 			if (data.poolLink) setDevPoolLink(data.poolLink);
 			setStep("success");
@@ -377,11 +328,9 @@ export function LandingHero() {
 	const handleCreateNewPool = () => {
 		if (typeof window !== "undefined") {
 			localStorage.removeItem(CREATED_AT_KEY);
-			localStorage.removeItem(CREATED_POOL_SLUG_KEY);
 			localStorage.removeItem(DEV_POOL_LINK_KEY);
 		}
 		setCreatedAt(null);
-		setCreatedPoolSlug(null);
 		setDevPoolLink(null);
 		setStep("hero");
 	};
@@ -439,16 +388,11 @@ export function LandingHero() {
 							Check your email
 						</h2>
 						<p className="text-sm text-muted-foreground">
-							We sent a link to your email for you to create your GameSquares
-							pool.
+							We sent a link to your email. Click it to activate your admin
+							access and start managing your pool.
 						</p>
 					</div>
-					<YourPools
-						pools={poolHistory}
-						createdPoolSlug={createdPoolSlug}
-						hasCreatedPoolNoSlug={createdAt !== null && !createdPoolSlug}
-						onRemove={handleRemovePool}
-					/>
+					<YourPools pools={poolHistory} onRemove={handleRemovePool} />
 					<FooterLinks />
 					{devPoolLink && (
 						<div className="rounded-lg mt-8 border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-left">
@@ -473,17 +417,21 @@ export function LandingHero() {
 
 	// Returning user: they already created a pool within 15 min (no button) or after (show create new)
 	if (createdAt !== null && step === "hero") {
+		const hasVerifiedAdmin = poolHistory.some((p) => p.role === "admin");
 		return (
 			<main className="flex min-h-dvh flex-col items-center justify-center px-6 py-12">
 				<div className="flex w-full max-w-md flex-col gap-8 text-center opacity-0 animate-fade-in-up">
 					<div className="flex flex-col gap-2">
 						<h2 className="font-mono text-xl text-balance font-bold text-foreground">
-							You already created a GameSquares pool
+							{hasVerifiedAdmin
+								? "Welcome back!"
+								: "You already created a GameSquares pool"}
 						</h2>
-						<p className="text-sm text-balance text-muted-foreground">
-							Check your email for your admin link and the link to share with
-							players.
-						</p>
+						{!hasVerifiedAdmin && (
+							<p className="text-sm text-balance text-muted-foreground">
+								Check your email for the link to activate your admin access.
+							</p>
+						)}
 					</div>
 					{canCreateNew && (
 						<button
@@ -494,12 +442,7 @@ export function LandingHero() {
 							<PlusIcon className="w-4 h-4" /> Create another pool
 						</button>
 					)}
-					<YourPools
-						pools={poolHistory}
-						createdPoolSlug={createdPoolSlug}
-						hasCreatedPoolNoSlug={createdAt !== null && !createdPoolSlug}
-						onRemove={handleRemovePool}
-					/>
+					<YourPools pools={poolHistory} onRemove={handleRemovePool} />
 					<FooterLinks />
 					{devPoolLink && (
 						<div className="rounded-lg border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-left mt-8">
@@ -651,35 +594,37 @@ export function LandingHero() {
 						</p>
 					)}
 
-					{showSponsor && (() => {
-						const count = sponsorConfig?.poolsCount ?? 100;
-						const price = sponsorConfig?.displayPrice ?? "$5";
-						const othersCount = Math.max(0, count - 1);
-						return (
-							<div className="flex flex-col gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4 animate-fade-in-up">
-								<p className="text-sm font-medium text-foreground">
-									We're at capacity — but you can change that.
-								</p>
-								<p className="text-sm text-foreground">
-									For <strong>{price}</strong> you sponsor the next{" "}
-									<strong>{count} pool creations</strong>. That's{" "}
-									<strong>{othersCount} other groups</strong> who get to play for
-									free because of you — and you get to create yours right after.
-								</p>
-								<button
-									data-testid="sponsor-cta"
-									onClick={handleSponsor}
-									disabled={sponsorLoading}
-									className="w-full rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-all active:scale-[0.98] disabled:opacity-60"
-									type="button"
-								>
-									{sponsorLoading
-										? "Redirecting…"
-										: `Unlock the next ${count} — ${price}`}
-								</button>
-							</div>
-						);
-					})()}
+					{showSponsor &&
+						(() => {
+							const count = sponsorConfig?.poolsCount ?? 100;
+							const price = sponsorConfig?.displayPrice ?? "$5";
+							const othersCount = Math.max(0, count - 1);
+							return (
+								<div className="flex flex-col gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4 animate-fade-in-up">
+									<p className="text-sm font-medium text-foreground">
+										We're at capacity — but you can change that.
+									</p>
+									<p className="text-sm text-foreground">
+										For <strong>{price}</strong> you sponsor the next{" "}
+										<strong>{count} pool creations</strong>. That's{" "}
+										<strong>{othersCount} other groups</strong> who get to play
+										for free because of you — and you get to create yours right
+										after.
+									</p>
+									<button
+										data-testid="sponsor-cta"
+										onClick={handleSponsor}
+										disabled={sponsorLoading}
+										className="w-full rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-all active:scale-[0.98] disabled:opacity-60"
+										type="button"
+									>
+										{sponsorLoading
+											? "Redirecting…"
+											: `Unlock the next ${count} — ${price}`}
+									</button>
+								</div>
+							);
+						})()}
 
 					<button
 						data-testid="landing-create-pool-submit"
@@ -764,6 +709,7 @@ export function LandingHero() {
 						</svg>
 						<h1 className="font-mono text-4xl font-bold tracking-tight text-foreground">
 							GameSquares
+							<span className="opacity-50 text-xl tracking-tight">.live</span>
 						</h1>
 					</div>
 				</div>
@@ -793,12 +739,7 @@ export function LandingHero() {
 				)}
 				{poolHistory.length > 0 && (
 					<div className="opacity-0 animate-fade-in-up animate-delay-3">
-						<YourPools
-							pools={poolHistory}
-							createdPoolSlug={createdPoolSlug}
-							hasCreatedPoolNoSlug={createdAt !== null && !createdPoolSlug}
-							onRemove={handleRemovePool}
-						/>
+						<YourPools pools={poolHistory} onRemove={handleRemovePool} />
 					</div>
 				)}
 				<div className="opacity-0 animate-fade-in-up animate-delay-4">
