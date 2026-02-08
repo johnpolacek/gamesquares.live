@@ -9,12 +9,12 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { transformToPool } from "@/lib/convex-to-pool";
 import { DEFAULT_EMOJI, searchPicker } from "@/lib/emoji-picker";
+import { addPoolToHistory } from "@/lib/pool-history";
 import {
 	getInitials,
 	getPlayerSquareCount,
 	isBoardFull,
 } from "@/lib/pool-store";
-import { addPoolToHistory } from "@/lib/pool-history";
 import type { PlayerIdentity } from "@/lib/types";
 
 /**
@@ -375,7 +375,10 @@ export default function PlayPage() {
 
 	// What-if scenarios for play view (show when game is active)
 	const hasGame = gameData?.found === true;
-	const possession = (hasGame ? gameData.game.possession : "none") as "home" | "away" | "none";
+	const possession = (hasGame ? gameData.game.possession : "none") as
+		| "home"
+		| "away"
+		| "none";
 	const latestQuarter =
 		hasGame && gameData.game.quarters.length > 0
 			? gameData.game.quarters[gameData.game.quarters.length - 1]
@@ -448,7 +451,10 @@ export default function PlayPage() {
 					<div className="w-full rounded-lg bg-card p-4 ring-1 ring-border">
 						<div className="flex items-center justify-between">
 							<span className="text-sm text-muted-foreground">Pool</span>
-							<span className="text-sm font-bold text-foreground text-right max-w-[70%] truncate" title={poolData.pool.title}>
+							<span
+								className="text-sm font-bold text-foreground text-right max-w-[70%] truncate"
+								title={poolData.pool.title}
+							>
 								{poolData.pool.title}
 							</span>
 						</div>
@@ -470,26 +476,26 @@ export default function PlayPage() {
 						</div>
 					</div>
 
-				{boardFull ? (
-					<>
-						<div className="w-full rounded-lg bg-muted p-4">
-							<p className="text-sm font-semibold text-muted-foreground text-center">
-								This board is full.
-							</p>
-						</div>
-						<div className="w-full pt-2 relative -left-1.5">
-							<SquaresGrid
-								pool={pool}
-								onSquareClick={() => {}}
-								currentPlayerName={null}
-								interactive={false}
-								canRelease={false}
-								winningSquares={winningSquares}
-								currentScore={currentScore}
-							/>
-						</div>
-					</>
-				) : (
+					{boardFull ? (
+						<>
+							<div className="w-full rounded-lg bg-muted p-4">
+								<p className="text-sm font-semibold text-muted-foreground text-center">
+									This board is full. Waiting for game to start.
+								</p>
+							</div>
+							<div className="w-full pt-2 relative -left-1.5">
+								<SquaresGrid
+									pool={pool}
+									onSquareClick={() => {}}
+									currentPlayerName={null}
+									interactive={false}
+									canRelease={false}
+									winningSquares={winningSquares}
+									currentScore={currentScore}
+								/>
+							</div>
+						</>
+					) : (
 						<div className="flex w-full flex-col gap-5">
 							<div className="flex flex-col gap-2">
 								<label
@@ -696,67 +702,74 @@ export default function PlayPage() {
 				</div>
 			)}
 
-		{gameData?.found && (
-			<div className="w-full max-w-sm mx-4 sm:mx-auto mt-2 rounded-lg bg-card px-3 py-2 ring-1 ring-border">
-				<div className="flex items-center justify-between">
-					<p className="text-xs font-semibold text-muted-foreground">
-						{gameData.game.name}
-					</p>
-					{/* Compact possession indicator */}
-					{gameData.game.possession && gameData.game.possession !== "none" && !isGameComplete && (
-						<span className={`flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider ${
-							gameData.game.isRedZone
-								? "text-red-600"
-								: "text-amber-600"
-						}`}>
-							🏈 {gameData.game.possession === "home" ? "Patriots" : "Seahawks"}
-							{gameData.game.isRedZone && (
-								<span className="rounded-full bg-red-500 px-1 py-px text-[8px] text-white animate-pulse">
-									RZ
+			{gameData?.found && (
+				<div className="w-full max-w-sm mx-4 sm:mx-auto mt-2 rounded-lg bg-card px-3 py-2 ring-1 ring-border">
+					<div className="flex items-center justify-between">
+						<p className="text-xs font-semibold text-muted-foreground">
+							{gameData.game.name}
+						</p>
+						{/* Compact possession indicator */}
+						{gameData.game.possession &&
+							gameData.game.possession !== "none" &&
+							!isGameComplete && (
+								<span
+									className={`flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider ${
+										gameData.game.isRedZone ? "text-red-600" : "text-amber-600"
+									}`}
+								>
+									🏈{" "}
+									{gameData.game.possession === "home"
+										? "Patriots"
+										: "Seahawks"}
+									{gameData.game.isRedZone && (
+										<span className="rounded-full bg-red-500 px-1 py-px text-[8px] text-white animate-pulse">
+											RZ
+										</span>
+									)}
 								</span>
 							)}
-						</span>
+					</div>
+					{/* Down and distance */}
+					{gameData.game.downDistance && !isGameComplete && (
+						<p
+							className={`text-[10px] font-medium mt-0.5 ${
+								gameData.game.isRedZone
+									? "text-red-500"
+									: "text-muted-foreground/70"
+							}`}
+						>
+							{gameData.game.downDistance}
+						</p>
 					)}
-				</div>
-				{/* Down and distance */}
-				{gameData.game.downDistance && !isGameComplete && (
-					<p className={`text-[10px] font-medium mt-0.5 ${
-						gameData.game.isRedZone
-							? "text-red-500"
-							: "text-muted-foreground/70"
-					}`}>
-						{gameData.game.downDistance}
-					</p>
-				)}
-				<div className="mt-1 flex flex-col gap-y-0.5 text-sm font-medium text-foreground">
-					{quarterDisplays
-						? quarterDisplays.map((q) => {
-								const isFinal = isGameComplete && q.isLatest;
-								const rowWins = isFinal && q.rowTeamScore > q.colTeamScore;
-								const colWins = isFinal && q.colTeamScore > q.rowTeamScore;
-								return (
+					<div className="mt-1 flex flex-col gap-y-0.5 text-sm font-medium text-foreground">
+						{quarterDisplays
+							? quarterDisplays.map((q) => {
+									const isFinal = isGameComplete && q.isLatest;
+									const rowWins = isFinal && q.rowTeamScore > q.colTeamScore;
+									const colWins = isFinal && q.colTeamScore > q.rowTeamScore;
+									return (
+										<span key={q.label}>
+											{isFinal ? "FINAL" : q.label}:{" "}
+											<span className={rowWins ? "font-extrabold" : ""}>
+												{q.rowTeamScore}
+											</span>
+											–
+											<span className={colWins ? "font-extrabold" : ""}>
+												{q.colTeamScore}
+											</span>
+											{q.playerName != null &&
+												` (${q.isQuarterComplete || isGameComplete ? "winner" : q.isLatest ? "currently winning" : "winner"}: ${q.playerName})`}
+										</span>
+									);
+								})
+							: gameData.game.quarters.map((q) => (
 									<span key={q.label}>
-										{isFinal ? "FINAL" : q.label}:{" "}
-										<span className={rowWins ? "font-extrabold" : ""}>
-											{q.rowTeamScore}
-										</span>
-										–
-										<span className={colWins ? "font-extrabold" : ""}>
-											{q.colTeamScore}
-										</span>
-										{q.playerName != null &&
-											` (${q.isQuarterComplete || isGameComplete ? "winner" : q.isLatest ? "currently winning" : "winner"}: ${q.playerName})`}
+										{q.label}: {q.rowTeamScore}–{q.colTeamScore}
 									</span>
-								);
-							})
-						: gameData.game.quarters.map((q) => (
-								<span key={q.label}>
-									{q.label}: {q.rowTeamScore}–{q.colTeamScore}
-								</span>
-							))}
+								))}
+					</div>
 				</div>
-			</div>
-		)}
+			)}
 
 			{!canPick && !boardFull && pool.status === "open" && (
 				<div className="bg-muted px-4 py-2.5">

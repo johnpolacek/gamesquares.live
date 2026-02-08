@@ -124,7 +124,7 @@ export function PlayerBoard({ pool, onClaimSquare }: PlayerBoardProps) {
 					{boardFull ? (
 						<div className="w-full rounded-lg bg-muted p-4">
 							<p className="text-sm font-semibold text-muted-foreground">
-								This board is full. Check back later.
+								This board is full. Waiting for game to start.
 							</p>
 						</div>
 					) : (
