@@ -106,6 +106,54 @@ export const getPoolCount = query({
 	},
 });
 
+/** Pool summary for admin list */
+const poolSummaryValidator = v.object({
+	_id: v.id("pools"),
+	title: v.string(),
+	slug: v.string(),
+	status: v.union(v.literal("open"), v.literal("locked")),
+	createdAt: v.number(),
+	participantCount: v.number(),
+	claimedCount: v.number(),
+});
+
+/**
+ * List pools for admin dashboard (most recent first).
+ */
+export const listPools = query({
+	args: {},
+	returns: v.array(poolSummaryValidator),
+	handler: async (ctx) => {
+		const pools = await ctx.db.query("pools").collect();
+		const sorted = pools.sort((a, b) => b.createdAt - a.createdAt);
+		const limited = sorted.slice(0, 100);
+
+		const result = await Promise.all(
+			limited.map(async (pool) => {
+				const participants = await ctx.db
+					.query("participants")
+					.withIndex("by_pool", (q) => q.eq("poolId", pool._id))
+					.collect();
+				const squares = await ctx.db
+					.query("squares")
+					.withIndex("by_pool", (q) => q.eq("poolId", pool._id))
+					.collect();
+				const claimedCount = squares.filter((s) => s.participantId).length;
+				return {
+					_id: pool._id,
+					title: pool.title,
+					slug: pool.slug,
+					status: pool.status,
+					createdAt: pool.createdAt,
+					participantCount: participants.length,
+					claimedCount,
+				};
+			}),
+		);
+		return result;
+	},
+});
+
 /**
  * Get a pool by slug with all squares and participants.
  * Used for both admin and player views.

@@ -135,6 +135,11 @@ export default function AdminPage() {
 	const [authError, setAuthError] = useState("");
 	const [authLoading, setAuthLoading] = useState(false);
 
+	const poolsList = useQuery(
+		api.pools.listPools,
+		authenticated ? {} : "skip",
+	);
+
 	// Scores form state
 	const [name, setName] = useState("Global Game");
 	const [quarters, setQuarters] = useState<QuarterState>(defaultQuarters);
@@ -501,6 +506,99 @@ export default function AdminPage() {
 									</span>
 								</span>
 							</div>
+						</div>
+					)}
+				</section>
+
+				{/* ═══════════════════════════════════════════════════════════
+				    SECTION: Pools (games people are running)
+				    ═══════════════════════════════════════════════════════════ */}
+				<section className="space-y-3">
+					<h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+						Pools
+					</h2>
+					{poolsList === undefined && (
+						<p className="text-sm text-muted-foreground">Loading...</p>
+					)}
+					{poolsList && poolsList.length === 0 && (
+						<div className="rounded-md border border-border bg-muted/40 p-4">
+							<p className="text-sm text-muted-foreground">
+								No pools yet.
+							</p>
+						</div>
+					)}
+					{poolsList && poolsList.length > 0 && (
+						<div className="rounded-md border border-border overflow-hidden">
+							<div className="overflow-x-auto max-h-64 overflow-y-auto">
+								<table className="w-full text-sm">
+									<thead className="sticky top-0 bg-muted/80 border-b border-border">
+										<tr>
+											<th className="text-left py-2 px-3 font-semibold text-foreground">Title</th>
+											<th className="text-left py-2 px-3 font-semibold text-foreground">Slug</th>
+											<th className="text-left py-2 px-3 font-semibold text-foreground">Status</th>
+											<th className="text-left py-2 px-3 font-semibold text-foreground">Created</th>
+											<th className="text-right py-2 px-3 font-semibold text-foreground">Players</th>
+											<th className="text-right py-2 px-3 font-semibold text-foreground">Claimed</th>
+											<th className="text-left py-2 px-3 font-semibold text-foreground">Links</th>
+										</tr>
+									</thead>
+									<tbody>
+										{poolsList.map((pool) => (
+											<tr key={pool._id} className="border-b border-border/50 hover:bg-muted/40">
+												<td className="py-2 px-3 font-medium text-foreground truncate max-w-[180px]" title={pool.title}>
+													{pool.title}
+												</td>
+												<td className="py-2 px-3 font-mono text-xs text-muted-foreground">
+													{pool.slug}
+												</td>
+												<td className="py-2 px-3">
+													<span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+														pool.status === "locked"
+															? "bg-muted text-muted-foreground"
+															: "bg-primary/15 text-primary"
+													}`}>
+														{pool.status}
+													</span>
+												</td>
+												<td className="py-2 px-3 text-muted-foreground whitespace-nowrap">
+													{timeAgo(pool.createdAt)}
+												</td>
+												<td className="py-2 px-3 text-right tabular-nums">
+													{pool.participantCount}
+												</td>
+												<td className="py-2 px-3 text-right tabular-nums">
+													{pool.claimedCount}/100
+												</td>
+												<td className="py-2 px-3">
+													<div className="flex items-center gap-2">
+														<Link
+															href={`/play/${pool.slug}`}
+															target="_blank"
+															rel="noopener noreferrer"
+															className="text-primary hover:underline text-xs"
+														>
+															Play
+														</Link>
+														<Link
+															href={`/view/${pool.slug}`}
+															target="_blank"
+															rel="noopener noreferrer"
+															className="text-muted-foreground hover:text-foreground text-xs"
+														>
+															View
+														</Link>
+													</div>
+												</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
+							{poolsList.length >= 100 && (
+								<p className="text-xs text-muted-foreground px-3 py-2 border-t border-border">
+									Showing most recent 100 pools.
+								</p>
+							)}
 						</div>
 					)}
 				</section>
