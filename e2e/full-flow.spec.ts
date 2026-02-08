@@ -214,10 +214,10 @@ test.describe("Full flow", () => {
 		});
 
 		// Should show current score (0 - 3) — wait for Convex real-time to sync
-		await expect(viewPage.getByTestId("view-eagles-score")).toHaveText("0", {
+		await expect(viewPage.getByTestId("view-home-score")).toHaveText("0", {
 			timeout: 10000,
 		});
-		await expect(viewPage.getByTestId("view-patriots-score")).toHaveText("3", {
+		await expect(viewPage.getByTestId("view-away-score")).toHaveText("3", {
 			timeout: 10000,
 		});
 
@@ -225,16 +225,16 @@ test.describe("Full flow", () => {
 		await expect(viewPage.getByTestId("view-what-if")).toBeVisible({
 			timeout: 10000,
 		});
-		await expect(viewPage.getByText("Eagles FG")).toBeVisible({
-			timeout: 10000,
-		});
-		await expect(viewPage.getByText("Eagles TD")).toBeVisible({
-			timeout: 10000,
-		});
 		await expect(viewPage.getByText("Patriots FG")).toBeVisible({
 			timeout: 10000,
 		});
 		await expect(viewPage.getByText("Patriots TD")).toBeVisible({
+			timeout: 10000,
+		});
+		await expect(viewPage.getByText("Seahawks FG")).toBeVisible({
+			timeout: 10000,
+		});
+		await expect(viewPage.getByText("Seahawks TD")).toBeVisible({
 			timeout: 10000,
 		});
 
@@ -392,10 +392,10 @@ test.describe("Full flow", () => {
 		});
 
 		// Should show final scores
-		await expect(viewPage.getByTestId("view-eagles-score")).toHaveText("34", {
+		await expect(viewPage.getByTestId("view-home-score")).toHaveText("34", {
 			timeout: 10000,
 		});
-		await expect(viewPage.getByTestId("view-patriots-score")).toHaveText("41", {
+		await expect(viewPage.getByTestId("view-away-score")).toHaveText("41", {
 			timeout: 10000,
 		});
 

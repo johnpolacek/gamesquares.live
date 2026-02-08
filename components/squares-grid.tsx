@@ -86,23 +86,23 @@ export function SquaresGrid({
 	}
 	return (
 		<div className="mx-auto w-full max-w-lg opacity-0 animate-fade-in-up">
-			{/* Patriots label above column headers */}
+			{/* Away team (Seahawks) label above column headers */}
 			<div className="flex items-center justify-center pb-1 pl-5">
 				<div className="flex items-center gap-1.5">
-					<div className="h-2 w-2 rounded-full bg-patriots" />
+					<div className="h-2 w-2 rounded-full bg-away-team" />
 					<span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-						Patriots
+						Seahawks
 					</span>
 				</div>
 			</div>
 
 			<div className="relative">
-				{/* Eagles label rotated vertically - absolutely positioned */}
+				{/* Home team (Patriots) label rotated vertically - absolutely positioned */}
 				<div className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center justify-center w-5">
 					<div className="flex -rotate-90 items-center gap-1.5 whitespace-nowrap">
-						<div className="h-2 w-2 rounded-full bg-eagles" />
+						<div className="h-2 w-2 rounded-full bg-home-team" />
 						<span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-							Eagles
+							Patriots
 						</span>
 					</div>
 				</div>
@@ -117,16 +117,16 @@ export function SquaresGrid({
 					{/* Corner cell */}
 					<div className="flex items-center justify-center" />
 
-					{/* Column headers - Patriots numbers */}
+					{/* Column headers - Away team (Seahawks) numbers */}
 					{Array.from({ length: 10 }, (_, i) => {
 						const hasNumber = pool.colNumbers[i] !== null;
 						return (
 							<div
 								key={`col-${i}`}
-								className={`flex items-center justify-center bg-patriots ${hasNumber ? "opacity-0 animate-fade-in-up" : ""}`}
+								className={`flex items-center justify-center bg-away-team ${hasNumber ? "opacity-0 animate-fade-in-up" : ""}`}
 								style={hasNumber ? { animationDelay: `${i * 30}ms` } : undefined}
 							>
-								<span className="text-[10px] font-bold text-patriots-foreground md:text-xs">
+								<span className="text-[10px] font-bold text-away-team-foreground md:text-xs">
 									{pool.colNumbers[i] ?? "?"}
 								</span>
 							</div>
@@ -136,12 +136,12 @@ export function SquaresGrid({
 					{/* Rows */}
 					{pool.squares.map((row, rowIdx) => (
 						<React.Fragment key={rowIdx}>
-							{/* Row header - Eagles numbers */}
+							{/* Row header - Home team (Patriots) numbers */}
 							<div
-								className={`flex items-center justify-center bg-eagles ${pool.rowNumbers[rowIdx] !== null ? "opacity-0 animate-fade-in-up" : ""}`}
+								className={`flex items-center justify-center bg-home-team ${pool.rowNumbers[rowIdx] !== null ? "opacity-0 animate-fade-in-up" : ""}`}
 								style={pool.rowNumbers[rowIdx] !== null ? { animationDelay: `${rowIdx * 30}ms` } : undefined}
 							>
-								<span className="text-[10px] font-bold text-eagles-foreground md:text-xs">
+								<span className="text-[10px] font-bold text-home-team-foreground md:text-xs">
 									{pool.rowNumbers[rowIdx] ?? "?"}
 								</span>
 							</div>

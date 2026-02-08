@@ -66,22 +66,22 @@ function MiniGrid({
 
 	return (
 		<div className={`mini-grid ${className}`}>
-			{/* Patriots label */}
+			{/* Away team (Seahawks) label */}
 			<div className="flex items-center justify-center pb-0.5 pl-4">
 				<div className="flex items-center gap-1">
-					<div className="h-1.5 w-1.5 rounded-full bg-patriots" />
+					<div className="h-1.5 w-1.5 rounded-full bg-away-team" />
 					<span className="text-[7px] font-semibold uppercase tracking-wider text-muted-foreground">
-						Patriots
+						Seahawks
 					</span>
 				</div>
 			</div>
 			<div className="relative">
-				{/* Eagles label */}
+				{/* Home team (Patriots) label */}
 				<div className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center justify-center w-4">
 					<div className="flex -rotate-90 items-center gap-1 whitespace-nowrap">
-						<div className="h-1.5 w-1.5 rounded-full bg-eagles" />
+						<div className="h-1.5 w-1.5 rounded-full bg-home-team" />
 						<span className="text-[7px] font-semibold uppercase tracking-wider text-muted-foreground">
-							Eagles
+							Patriots
 						</span>
 					</div>
 				</div>
@@ -95,8 +95,8 @@ function MiniGrid({
 					<div />
 					{/* Col headers */}
 					{Array.from({ length: 10 }, (_, i) => (
-						<div key={`ch-col-${pool.colNumbers[i] ?? i}`} className="flex items-center justify-center bg-patriots">
-							<span className="text-[7px] font-bold text-patriots-foreground">
+						<div key={`ch-col-${pool.colNumbers[i] ?? i}`} className="flex items-center justify-center bg-away-team">
+							<span className="text-[7px] font-bold text-away-team-foreground">
 								{showNumbers ? (pool.colNumbers[i] ?? "") : ""}
 							</span>
 						</div>
@@ -104,8 +104,8 @@ function MiniGrid({
 					{/* Rows */}
 					{pool.squares.map((row, ri) => (
 						<React.Fragment key={`row-${pool.rowNumbers[ri] ?? ri}`}>
-							<div className="flex items-center justify-center bg-eagles">
-								<span className="text-[7px] font-bold text-eagles-foreground">
+							<div className="flex items-center justify-center bg-home-team">
+								<span className="text-[7px] font-bold text-home-team-foreground">
 									{showNumbers ? (pool.rowNumbers[ri] ?? "") : ""}
 								</span>
 							</div>
@@ -394,22 +394,22 @@ export const SceneStart = forwardRef<HTMLDivElement>((_, ref) => (
 			{/* Number reveal */}
 			<div className="scene-el w-full max-w-sm sm:max-w-md mx-auto flex flex-col gap-2">
 				<div className="flex items-center gap-2">
-					<div className="h-2.5 w-2.5 rounded-full bg-patriots" />
-					<span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Patriots</span>
+					<div className="h-2.5 w-2.5 rounded-full bg-away-team" />
+					<span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Seahawks</span>
 					<div className="flex gap-1 ml-auto">
 						{DEMO_COL_NUMBERS.map((n) => (
-							<div key={`pat-${n}`} className="num-cell flex h-6 w-6 items-center justify-center rounded bg-patriots text-[10px] font-bold text-patriots-foreground">
+							<div key={`sea-${n}`} className="num-cell flex h-6 w-6 items-center justify-center rounded bg-away-team text-[10px] font-bold text-away-team-foreground">
 								{n}
 							</div>
 						))}
 					</div>
 				</div>
 				<div className="flex items-center gap-2">
-					<div className="h-2.5 w-2.5 rounded-full bg-eagles" />
-					<span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Eagles</span>
+					<div className="h-2.5 w-2.5 rounded-full bg-home-team" />
+					<span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Patriots</span>
 					<div className="flex gap-1 ml-auto">
 						{DEMO_ROW_NUMBERS.map((n) => (
-							<div key={`eag-${n}`} className="num-cell flex h-6 w-6 items-center justify-center rounded bg-eagles text-[10px] font-bold text-eagles-foreground">
+							<div key={`pat-${n}`} className="num-cell flex h-6 w-6 items-center justify-center rounded bg-home-team text-[10px] font-bold text-home-team-foreground">
 								{n}
 							</div>
 						))}
@@ -431,7 +431,7 @@ SceneStart.displayName = "SceneStart";
 // ═══════════════════════════════════════════════════════════════════════
 export const SceneQ1 = forwardRef<HTMLDivElement>((_, ref) => {
 	const q = DEMO_QUARTERS[0];
-	const winner = getWinnerName(DEMO_POOL_FULL, q.eaglesScore, q.patriotsScore);
+	const winner = getWinnerName(DEMO_POOL_FULL, q.homeScore, q.awayScore);
 	return (
 		<SceneWrapper ref={ref}>
 			<div className="flex w-full max-w-lg sm:max-w-xl flex-col items-center gap-6">
@@ -444,15 +444,15 @@ export const SceneQ1 = forwardRef<HTMLDivElement>((_, ref) => {
 					<div className="rounded-xl bg-card p-5 ring-1 ring-border">
 						<div className="flex items-center justify-center gap-6">
 							<div className="flex flex-col items-center gap-1">
-								<div className="h-3 w-3 rounded-full bg-eagles" />
-								<span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Eagles</span>
-								<span className="score-num text-4xl font-bold font-mono text-foreground">{q.eaglesScore}</span>
+								<div className="h-3 w-3 rounded-full bg-home-team" />
+								<span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Patriots</span>
+								<span className="score-num text-4xl font-bold font-mono text-foreground">{q.homeScore}</span>
 							</div>
 							<span className="text-2xl font-light text-muted-foreground">-</span>
 							<div className="flex flex-col items-center gap-1">
-								<div className="h-3 w-3 rounded-full bg-patriots" />
-								<span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Patriots</span>
-								<span className="score-num text-4xl font-bold font-mono text-foreground">{q.patriotsScore}</span>
+								<div className="h-3 w-3 rounded-full bg-away-team" />
+								<span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Seahawks</span>
+								<span className="score-num text-4xl font-bold font-mono text-foreground">{q.awayScore}</span>
 							</div>
 						</div>
 						<div className="mt-4 flex items-center justify-center gap-2">
@@ -506,22 +506,22 @@ export const SceneFinal = forwardRef<HTMLDivElement>((_, ref) => {
 						</div>
 						<div className="flex items-center justify-center gap-6">
 							<div className="flex flex-col items-center gap-1">
-								<div className="h-3 w-3 rounded-full bg-eagles" />
-								<span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Eagles</span>
-								<span className="score-num text-4xl font-bold font-mono text-foreground">{finalQ.eaglesScore}</span>
+								<div className="h-3 w-3 rounded-full bg-home-team" />
+								<span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Patriots</span>
+								<span className="score-num text-4xl font-bold font-mono text-foreground">{finalQ.homeScore}</span>
 							</div>
 							<span className="text-2xl font-light text-muted-foreground">-</span>
 							<div className="flex flex-col items-center gap-1">
-								<div className="h-3 w-3 rounded-full bg-patriots" />
-								<span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Patriots</span>
-								<span className="score-num text-4xl font-bold font-mono text-foreground">{finalQ.patriotsScore}</span>
+								<div className="h-3 w-3 rounded-full bg-away-team" />
+								<span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Seahawks</span>
+								<span className="score-num text-4xl font-bold font-mono text-foreground">{finalQ.awayScore}</span>
 							</div>
 						</div>
 
 						{/* Quarter winners */}
 						<div className="mt-4 flex flex-col gap-1.5">
 							{DEMO_QUARTERS.map((q, i) => {
-								const w = getWinnerName(DEMO_POOL_FULL, q.eaglesScore, q.patriotsScore);
+								const w = getWinnerName(DEMO_POOL_FULL, q.homeScore, q.awayScore);
 								const qc = QUARTER_COLORS[q.label] ?? QUARTER_COLORS.Q1;
 								return (
 									<div key={q.label} className="quarter-row flex items-center justify-between text-sm">
@@ -533,7 +533,7 @@ export const SceneFinal = forwardRef<HTMLDivElement>((_, ref) => {
 												{i === 3 ? "FINAL" : q.label}
 											</span>
 											<span className="text-muted-foreground text-xs">
-												{q.eaglesScore} - {q.patriotsScore}
+												{q.homeScore} - {q.awayScore}
 											</span>
 										</div>
 										<span className="font-semibold text-foreground text-xs">{w}</span>

@@ -1,5 +1,10 @@
 import { v } from "convex/values";
-import { internalMutation, mutation, query } from "./_generated/server";
+import {
+	internalMutation,
+	internalQuery,
+	mutation,
+	query,
+} from "./_generated/server";
 
 const quarterValidator = v.object({
 	label: v.string(),
@@ -98,6 +103,21 @@ export const setScoresManual = mutation({
 });
 
 /**
+ * Internal query: get the latest game (most recently updated).
+ * Used by the scraper action for dedup (skip insert if scores unchanged).
+ */
+export const getLatestGame = internalQuery({
+	args: {},
+	handler: async (ctx) => {
+		return await ctx.db
+			.query("games")
+			.withIndex("by_updated")
+			.order("desc")
+			.first();
+	},
+});
+
+/**
  * Internal: set scores from scraper/action. Called by fetchNflScores action.
  */
 export const setScoresFromScrape = internalMutation({
@@ -105,6 +125,7 @@ export const setScoresFromScrape = internalMutation({
 		name: v.string(),
 		externalId: v.optional(v.string()),
 		quarters: v.array(quarterValidator),
+		gameComplete: v.optional(v.boolean()),
 	},
 	handler: async (ctx, args) => {
 		const now = Date.now();
@@ -112,6 +133,7 @@ export const setScoresFromScrape = internalMutation({
 			name: args.name,
 			externalId: args.externalId,
 			quarters: args.quarters,
+			gameComplete: args.gameComplete,
 			updatedAt: now,
 			source: "scrape",
 		});

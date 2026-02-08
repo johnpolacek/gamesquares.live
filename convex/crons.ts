@@ -3,10 +3,10 @@ import { api } from "./_generated/api";
 
 const crons = cronJobs();
 
-// Fetch NFL scores from ESPN every 2 minutes (e.g. on game day)
+// Fetch NFL scores from ESPN every minute on game day
 crons.interval(
 	"fetch nfl scores",
-	{ minutes: 2 },
+	{ minutes: 1 },
 	api.nflScores.fetchAndUpdateScores,
 );
 

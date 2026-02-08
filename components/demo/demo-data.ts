@@ -115,30 +115,30 @@ export const DEMO_POOL_NO_NUMBERS: Pool = {
 	colNumbers: Array(10).fill(null),
 };
 
-// ── Quarter scores ──────────────────────────────────────────────────────
+// ── Quarter scores (home = Patriots = row, away = Seahawks = col) ───────
 export const DEMO_QUARTERS = [
-	{ label: "Q1", eaglesScore: 7, patriotsScore: 3 },
-	{ label: "Q2", eaglesScore: 14, patriotsScore: 10 },
-	{ label: "Q3", eaglesScore: 21, patriotsScore: 17 },
-	{ label: "Q4", eaglesScore: 28, patriotsScore: 24 },
+	{ label: "Q1", homeScore: 7, awayScore: 3 },
+	{ label: "Q2", homeScore: 14, awayScore: 10 },
+	{ label: "Q3", homeScore: 21, awayScore: 17 },
+	{ label: "Q4", homeScore: 28, awayScore: 24 },
 ];
 
-// Winning square for each quarter = last digit of (eaglesScore, patriotsScore)
+// Winning square for each quarter = last digit of (homeScore, awayScore)
 // mapped through row/col number arrays
 function getWinningSquare(
-	eaglesScore: number,
-	patriotsScore: number,
+	homeScore: number,
+	awayScore: number,
 	label: string,
 ): WinningSquare {
 	return {
 		quarterLabel: label,
-		row: eaglesScore % 10,
-		col: patriotsScore % 10,
+		row: homeScore % 10,
+		col: awayScore % 10,
 	};
 }
 
 export const DEMO_WINNING_SQUARES: WinningSquare[] = DEMO_QUARTERS.map((q) =>
-	getWinningSquare(q.eaglesScore, q.patriotsScore, q.label),
+	getWinningSquare(q.homeScore, q.awayScore, q.label),
 );
 
 // Just Q1 winner
@@ -146,14 +146,14 @@ export const DEMO_Q1_WINNING = [DEMO_WINNING_SQUARES[0]];
 
 // Q1 current score digits
 export const DEMO_Q1_SCORE = {
-	rowDigit: DEMO_QUARTERS[0].eaglesScore % 10,
-	colDigit: DEMO_QUARTERS[0].patriotsScore % 10,
+	rowDigit: DEMO_QUARTERS[0].homeScore % 10,
+	colDigit: DEMO_QUARTERS[0].awayScore % 10,
 };
 
 // Final score digits
 export const DEMO_FINAL_SCORE = {
-	rowDigit: DEMO_QUARTERS[3].eaglesScore % 10,
-	colDigit: DEMO_QUARTERS[3].patriotsScore % 10,
+	rowDigit: DEMO_QUARTERS[3].homeScore % 10,
+	colDigit: DEMO_QUARTERS[3].awayScore % 10,
 };
 
 // ── Scene metadata ──────────────────────────────────────────────────────
@@ -170,11 +170,11 @@ export const SCENE_META = [
 // ── Helper: find winner name for a quarter ──────────────────────────────
 export function getWinnerName(
 	pool: Pool,
-	eaglesScore: number,
-	patriotsScore: number,
+	homeScore: number,
+	awayScore: number,
 ): string {
-	const rowDigit = eaglesScore % 10;
-	const colDigit = patriotsScore % 10;
+	const rowDigit = homeScore % 10;
+	const colDigit = awayScore % 10;
 	const rowIdx = pool.rowNumbers.indexOf(rowDigit);
 	const colIdx = pool.colNumbers.indexOf(colDigit);
 	if (rowIdx >= 0 && colIdx >= 0) {

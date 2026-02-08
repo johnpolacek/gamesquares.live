@@ -61,10 +61,10 @@ function computeWhatIfs(
 		teamSide: "row" | "col";
 		points: number;
 	}[] = [
-		{ label: "Eagles FG", teamSide: "row", points: 3 },
-		{ label: "Eagles TD", teamSide: "row", points: 7 },
-		{ label: "Patriots FG", teamSide: "col", points: 3 },
-		{ label: "Patriots TD", teamSide: "col", points: 7 },
+		{ label: "Patriots FG", teamSide: "row", points: 3 },
+		{ label: "Patriots TD", teamSide: "row", points: 7 },
+		{ label: "Seahawks FG", teamSide: "col", points: 3 },
+		{ label: "Seahawks TD", teamSide: "col", points: 7 },
 	];
 
 	return scenarios.map((s) => {
@@ -325,13 +325,13 @@ export default function ViewPage() {
 							</h3>
 							<div className="flex items-center justify-center gap-6 rounded-lg bg-white p-5 ring-1 ring-border">
 								<div className="flex flex-col items-center">
-									<span className="text-xs font-bold uppercase tracking-wider text-emerald-600">
-										Eagles
+									<span className="text-xs font-bold uppercase tracking-wider text-blue-600">
+										Patriots
 									</span>
 									<span
-										key={`eagles-${currentRowScore}`}
+										key={`patriots-${currentRowScore}`}
 										className="text-5xl font-black tabular-nums text-foreground animate-score-pop"
-										data-testid="view-eagles-score"
+										data-testid="view-home-score"
 									>
 										{currentRowScore}
 									</span>
@@ -352,13 +352,13 @@ export default function ViewPage() {
 									)}
 								</div>
 								<div className="flex flex-col items-center">
-									<span className="text-xs font-bold uppercase tracking-wider text-blue-600">
-										Patriots
+									<span className="text-xs font-bold uppercase tracking-wider text-emerald-600">
+										Seahawks
 									</span>
 									<span
-										key={`patriots-${currentColScore}`}
+										key={`seahawks-${currentColScore}`}
 										className="text-5xl font-black tabular-nums text-foreground animate-score-pop"
-										data-testid="view-patriots-score"
+										data-testid="view-away-score"
 									>
 										{currentColScore}
 									</span>
@@ -376,8 +376,8 @@ export default function ViewPage() {
 							<div className="flex flex-col gap-2.5">
 								{quarterDisplays.map((q, idx) => {
 									const isFinal = isGameComplete && q.isLatest;
-									const eaglesWinning = q.rowTeamScore > q.colTeamScore;
-									const patriotsWinning = q.colTeamScore > q.rowTeamScore;
+									const homeWinning = q.rowTeamScore > q.colTeamScore;
+									const awayWinning = q.colTeamScore > q.rowTeamScore;
 									return (
 										<div
 											key={q.label}
@@ -409,8 +409,8 @@ export default function ViewPage() {
 											<div className="mt-1.5 flex items-baseline gap-2">
 												<span
 													className={`text-xl font-bold tabular-nums ${
-														eaglesWinning
-															? "text-emerald-600"
+														homeWinning
+															? "text-blue-600"
 															: "text-foreground"
 													}`}
 												>
@@ -419,8 +419,8 @@ export default function ViewPage() {
 												<span className="text-muted-foreground/40">-</span>
 												<span
 													className={`text-xl font-bold tabular-nums ${
-														patriotsWinning
-															? "text-blue-600"
+														awayWinning
+															? "text-emerald-600"
 															: "text-foreground"
 													}`}
 												>
@@ -451,8 +451,8 @@ export default function ViewPage() {
 										key={s.label}
 										className={`rounded-lg p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
 											s.teamSide === "row"
-												? "bg-emerald-500/8 ring-1 ring-emerald-500/20"
-												: "bg-blue-500/8 ring-1 ring-blue-500/20"
+												? "bg-blue-500/8 ring-1 ring-blue-500/20"
+												: "bg-emerald-500/8 ring-1 ring-emerald-500/20"
 										}`}
 									>
 										<div className="flex items-center gap-1.5">
@@ -462,8 +462,8 @@ export default function ViewPage() {
 											<span
 												className={`text-xs font-bold uppercase tracking-wider ${
 													s.teamSide === "row"
-														? "text-emerald-600"
-														: "text-blue-600"
+														? "text-blue-600"
+														: "text-emerald-600"
 												}`}
 											>
 												{s.label}

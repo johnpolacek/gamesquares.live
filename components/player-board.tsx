@@ -301,9 +301,9 @@ export function PlayerBoard({ pool, onClaimSquare }: PlayerBoardProps) {
 
 			<div className="flex items-center gap-4 px-4 pt-3 pb-2">
 				<div className="flex items-center gap-1.5">
-					<div className="h-2 w-2 rounded-full bg-patriots" />
+					<div className="h-2 w-2 rounded-full bg-away-team" />
 					<span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-						Patriots
+						Seahawks
 					</span>
 					<svg
 						width="10"
@@ -323,9 +323,9 @@ export function PlayerBoard({ pool, onClaimSquare }: PlayerBoardProps) {
 					</svg>
 				</div>
 				<div className="flex items-center gap-1.5">
-					<div className="h-2 w-2 rounded-full bg-eagles" />
+					<div className="h-2 w-2 rounded-full bg-home-team" />
 					<span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-						Eagles
+						Patriots
 					</span>
 					<svg
 						width="10"
