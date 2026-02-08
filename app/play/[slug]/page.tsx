@@ -264,6 +264,48 @@ export default function PlayPage() {
 		[poolData, storedParticipant, handleClaimSquare, handleReleaseSquare],
 	);
 
+	// Randomly pick remaining squares (shuffle open indexes, claim up to remaining)
+	const [isRandomPicking, setIsRandomPicking] = useState(false);
+	const handleRandomPick = useCallback(async () => {
+		if (!poolData?.found || !storedParticipant || isRandomPicking) return;
+
+		const myCount = poolData.squares.filter(
+			(s) => s.participantId === storedParticipant.participantId,
+		).length;
+		const maxSquares = poolData.pool.maxSquaresPerPerson;
+		const remainingSlots = Math.max(0, maxSquares - myCount);
+		if (remainingSlots <= 0) return;
+
+		const openIndexes = poolData.squares
+			.filter((s) => !s.participantId)
+			.map((s) => s.index);
+		if (openIndexes.length === 0) return;
+
+		// Fisher–Yates shuffle
+		const shuffled = [...openIndexes];
+		for (let i = shuffled.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+		}
+
+		const toClaim = shuffled.slice(
+			0,
+			Math.min(remainingSlots, shuffled.length),
+		);
+		setIsRandomPicking(true);
+		try {
+			await claimSquaresMutation({
+				poolId: poolData.pool._id,
+				participantId: storedParticipant.participantId as Id<"participants">,
+				squareIndexes: toClaim,
+			});
+		} catch (err) {
+			console.error("Random pick error:", err);
+		} finally {
+			setIsRandomPicking(false);
+		}
+	}, [poolData, storedParticipant, isRandomPicking, claimSquaresMutation]);
+
 	// Loading
 	if (poolData === undefined) {
 		return (
@@ -695,10 +737,20 @@ export default function PlayPage() {
 
 			{canPick && (
 				<div className="bg-primary/10 px-4 py-2.5">
-					<p className="text-center text-sm font-medium text-primary">
-						Tap a square to claim it.{" "}
-						<span className="font-bold">{remaining}</span> remaining.
-					</p>
+					<div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center sm:items-center">
+						<p className="text-center text-sm font-medium text-primary">
+							Tap a square to claim it.{" "}
+							<span className="font-bold">{remaining}</span> remaining.
+						</p>
+						<button
+							type="button"
+							onClick={handleRandomPick}
+							disabled={isRandomPicking}
+							className="shrink-0 rounded-md border border-primary/40 bg-background px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+						>
+							{isRandomPicking ? "Picking…" : "Pick randomly"}
+						</button>
+					</div>
 				</div>
 			)}
 
