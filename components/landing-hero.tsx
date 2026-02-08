@@ -126,7 +126,7 @@ function YourPools({
 								<XIcon className="h-4 w-4" />
 							</button>
 						</div>
-						<div className="flex flex-wrap gap-2">
+						<div className="flex flex-wrap justify-center gap-2">
 							<Link
 								href={`/play/${pool.slug}`}
 								className="inline-flex items-center justify-center rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
