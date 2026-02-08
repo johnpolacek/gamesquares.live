@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { GraphicIcon } from "@/components/graphic-icon";
@@ -595,6 +596,14 @@ export default function PlayPage() {
 						</div>
 					)}
 				</div>
+				<Link
+					href="/how-to-play"
+					target="_blank"
+					rel="noopener noreferrer"
+					className="text-xs text-muted-foreground/70 hover:text-muted-foreground underline transition-colors"
+				>
+					How does this work?
+				</Link>
 			</main>
 		);
 	}
@@ -881,6 +890,14 @@ export default function PlayPage() {
 					</div>
 				</div>
 			)}
+			<Link
+				href="/how-to-play"
+				target="_blank"
+				rel="noopener noreferrer"
+				className="pb-6 text-center text-xs text-muted-foreground/70 hover:text-muted-foreground underline transition-colors"
+			>
+				How does this work?
+			</Link>
 		</div>
 	);
 }
