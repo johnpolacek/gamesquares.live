@@ -440,7 +440,7 @@ export default function PlayPage() {
 								/>
 							</svg>
 							<span className="font-mono text-lg font-bold text-foreground">
-								GameSquares
+								GameSquares.live
 							</span>
 						</div>
 					</div>
@@ -470,13 +470,26 @@ export default function PlayPage() {
 						</div>
 					</div>
 
-					{boardFull ? (
+				{boardFull ? (
+					<>
 						<div className="w-full rounded-lg bg-muted p-4">
-							<p className="text-sm font-semibold text-muted-foreground">
-								This board is full. Check back later.
+							<p className="text-sm font-semibold text-muted-foreground text-center">
+								This board is full.
 							</p>
 						</div>
-					) : (
+						<div className="w-full pt-2 relative -left-1.5">
+							<SquaresGrid
+								pool={pool}
+								onSquareClick={() => {}}
+								currentPlayerName={null}
+								interactive={false}
+								canRelease={false}
+								winningSquares={winningSquares}
+								currentScore={currentScore}
+							/>
+						</div>
+					</>
+				) : (
 						<div className="flex w-full flex-col gap-5">
 							<div className="flex flex-col gap-2">
 								<label
