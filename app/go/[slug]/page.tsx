@@ -136,6 +136,7 @@ export default function AdminPage() {
 	return (
 		<AdminBoard
 			pool={pool}
+			poolTitle={poolData.pool.title}
 			shareUrl={shareUrl}
 			maxSquaresPerPerson={poolData.pool.maxSquaresPerPerson}
 			onUpdateMaxSquares={handleUpdateMaxSquares}

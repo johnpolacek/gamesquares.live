@@ -46,12 +46,13 @@ You create a pool and send the play link to friends. You're the only one who can
   - **Pool title** (e.g. "Smith Family Super Bowl").
   - **Your email** (you'll get the admin link here).
   - **Squares per person** (e.g. 5 = 20 players for a full board, or 10 = 10 players).
-- Submit. You'll get an email with a **magic link** that opens your **admin board**. (In development, a "Dev: Open admin" link may also be shown on the play page.)
+- Submit. You'll get an email with a **magic link**. Click the link in the email to verify your access and open the **admin board**. Your pool will not appear in "Your Pools" on the homepage until you click this link — this prevents spam pool creation.
 
 ### 2. Share the play link
 
 - On your admin board you'll see the **share URL**: `https://yoursite.com/play/XXXXXXXX` (the slug is unique to your pool).
 - Send this link to everyone who can pick squares. **Only this link** is needed for players; they do not create accounts.
+- **QR Code sign:** Click the **QR** button next to the share URL to open a printable sign with a QR code. You can **Download** the QR code as a PNG or **Print** the full sign (pool title, QR code, URL, and "Scan to Join!" call-to-action) to display at your party.
 
 ### 3. Run the board
 
@@ -71,8 +72,9 @@ You only need the **play link** from the pool runner (e.g. `https://yoursite.com
 
 ### 1. Open the link and join
 
-- Open the link. You'll see the pool and an option to **join**.
-- Enter **your name** and pick an **icon** (emoji or symbol). Then click **Join pool**. You're in; no account or password.
+- Open the link (or scan the QR code sign at the party). You'll see the pool and an option to **join**.
+- Enter **your name** and pick an **icon** (emoji or symbol — search by keyword to find your favorite). Then click **Join pool**. You're in; no account or password.
+- If the board is full, you'll see a read-only view of the grid while waiting for the game to start.
 
 ### 2. Pick your squares
 
@@ -90,6 +92,7 @@ You only need the **play link** from the pool runner (e.g. `https://yoursite.com
 - If the **global admin** has entered game scores, the app shows the **game name** and **quarter scores** above or near the grid.
 - **Winning squares** for each quarter are highlighted and labeled (e.g. Q1, Q2). The winner for a quarter is the cell whose row and column match the last digit of the two teams' scores at the end of that quarter.
 - Check the board to see if your square won any quarter.
+- New to squares? There's a **"How does this work?"** link on the play page that opens a guide explaining the rules (`/how-to-play`).
 
 ---
 
@@ -98,8 +101,8 @@ You only need the **play link** from the pool runner (e.g. `https://yoursite.com
 | Role            | Main actions |
 |-----------------|--------------|
 | **Global admin** | Set `GLOBAL_ADMIN_SECRET` in Vercel and Convex; use `/admin` to manage scores, test ESPN feed, and force updates. |
-| **Pool runner**  | Create pool on homepage, get magic link by email, share `/play/{slug}`, assign numbers when board is full. |
-| **Player**       | Open `/play/{slug}`, join with name and icon, claim squares, see quarter winners when game scores are set. |
+| **Pool runner**  | Create pool on homepage, verify via magic link email, share `/play/{slug}` or print QR code sign, assign numbers when board is full. |
+| **Player**       | Open `/play/{slug}` or scan QR code, join with name and icon, claim squares, see quarter winners when game scores are set. |
 
 ---
 

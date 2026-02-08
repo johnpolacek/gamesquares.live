@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { GraphicIcon } from "@/components/graphic-icon";
+import { QrSignDialog } from "@/components/qr-sign-dialog";
 import { SquaresGrid, type WinningSquare } from "@/components/squares-grid";
 import type { Pool } from "@/lib/pool-store";
 import { getClaimedCount } from "@/lib/pool-store";
 
 type AdminBoardProps = {
 	pool: Pool;
+	poolTitle: string;
 	shareUrl: string;
 	maxSquaresPerPerson: number;
 	onUpdateMaxSquares: (
@@ -27,6 +29,7 @@ const SQUARES_OPTIONS = [1, 2, 4, 5, 10, 20, 25, 50];
 
 export function AdminBoard({
 	pool,
+	poolTitle,
 	shareUrl,
 	maxSquaresPerPerson,
 	onUpdateMaxSquares,
@@ -46,6 +49,7 @@ export function AdminBoard({
 	const [showConfirmNumbers, setShowConfirmNumbers] = useState(false);
 	const [showConfirmReassign, setShowConfirmReassign] = useState(false);
 	const [showConfirmDistribute, setShowConfirmDistribute] = useState(false);
+	const [showQrDialog, setShowQrDialog] = useState(false);
 	const claimedCount = getClaimedCount(pool);
 	const openCount = 100 - claimedCount;
 	const allPlayerNames = Object.keys(pool.players);
@@ -223,6 +227,32 @@ export function AdminBoard({
 						>
 							{displayUrl(shareUrl)}
 						</a>
+						<button
+							onClick={() => setShowQrDialog(true)}
+							className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2.5 text-xs font-semibold text-foreground transition-all active:scale-[0.97] cursor-pointer hover:bg-muted"
+							type="button"
+							title="QR Code"
+						>
+							<svg
+								width="14"
+								height="14"
+								viewBox="0 0 16 16"
+								fill="none"
+								aria-hidden="true"
+							>
+								<rect x="1" y="1" width="5" height="5" rx="0.5" stroke="currentColor" strokeWidth="1.3" />
+								<rect x="10" y="1" width="5" height="5" rx="0.5" stroke="currentColor" strokeWidth="1.3" />
+								<rect x="1" y="10" width="5" height="5" rx="0.5" stroke="currentColor" strokeWidth="1.3" />
+								<rect x="3" y="3" width="1.5" height="1.5" fill="currentColor" />
+								<rect x="12" y="3" width="1.5" height="1.5" fill="currentColor" />
+								<rect x="3" y="12" width="1.5" height="1.5" fill="currentColor" />
+								<rect x="10" y="10" width="1.5" height="1.5" fill="currentColor" />
+								<rect x="13" y="10" width="1.5" height="1.5" fill="currentColor" />
+								<rect x="10" y="13" width="1.5" height="1.5" fill="currentColor" />
+								<rect x="13" y="13" width="1.5" height="1.5" fill="currentColor" />
+							</svg>
+							QR
+						</button>
 						<button
 							onClick={handleCopy}
 							className={`flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground transition-all active:scale-[0.97] cursor-pointer ${copied ? "animate-scale-in" : ""}`}
@@ -568,6 +598,14 @@ export function AdminBoard({
 					</div>
 				</div>
 			)}
+
+			{/* QR Code Sign dialog */}
+			<QrSignDialog
+				open={showQrDialog}
+				onClose={() => setShowQrDialog(false)}
+				poolTitle={poolTitle}
+				shareUrl={shareUrl}
+			/>
 
 			{/* Confirmation dialog for distributing remaining squares */}
 			{showConfirmDistribute && (
