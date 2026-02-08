@@ -139,6 +139,7 @@ export const getPoolBySlug = query({
 					_id: v.id("participants"),
 					poolId: v.id("pools"),
 					displayName: v.string(),
+					graphic: v.optional(v.string()),
 					createdAt: v.number(),
 				}),
 			),
@@ -189,6 +190,7 @@ export const getPoolBySlug = query({
 			_id: p._id,
 			poolId: p.poolId,
 			displayName: p.displayName,
+			graphic: p.graphic,
 			createdAt: p.createdAt,
 		}));
 

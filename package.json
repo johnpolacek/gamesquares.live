@@ -24,7 +24,8 @@
 		"test:e2e:full": "playwright test e2e/full-flow.spec.ts --debug",
 		"dev:test": "concurrently \"pnpm dev\" \"wait-on -t 90000 http://localhost:3000 && pnpm exec playwright test --ui\"",
 		"go": "git add . && aic && git pom",
-		"ship": "vitest run && playwright test && git add . && aic && git pom"
+		"ship": "vitest run && playwright test && git add . && aic && git pom",
+		"ship:full": "vitest run && playwright test && pnpm exec convex deploy && git add . && aic && git pom"
 	},
 	"dependencies": {
 		"@hookform/resolvers": "^3.10.0",
