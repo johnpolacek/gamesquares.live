@@ -40,6 +40,16 @@ export async function POST(request: Request) {
 				{ status: 400 },
 			);
 		}
+
+		// Validate secret server-side before forwarding to Convex
+		const expected = process.env.GLOBAL_ADMIN_SECRET;
+		if (!expected || secret !== expected) {
+			return NextResponse.json(
+				{ error: "Unauthorized" },
+				{ status: 401 },
+			);
+		}
+
 		if (!quarters || quarters.length === 0) {
 			return NextResponse.json(
 				{ error: "quarters array is required" },
