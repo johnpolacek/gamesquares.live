@@ -897,7 +897,7 @@ export default function PlayPage() {
 					</div>
 				</div>
 			)}
-			<div className="p-4">
+			<div className="p-4 text-xs">
 				<p>
 					Not sure how Squares works?{" "}
 					<Link
