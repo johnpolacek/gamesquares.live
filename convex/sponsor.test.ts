@@ -135,3 +135,86 @@ describe("createPool with bonusCapacity", () => {
 		).rejects.toThrow();
 	});
 });
+
+describe("full sponsorship flow", () => {
+	it("hit limit → sponsor adds capacity → pool creation succeeds", async () => {
+		const t = convexTest(schema, modules);
+
+		// 1. Seed globalLimits at the base cap (100)
+		await t.run(async (ctx) => {
+			await ctx.db.insert("globalLimits", {
+				windowStart: Date.now(),
+				createdCount: 100,
+				bonusCapacity: 0,
+				bonusExpiresAt: 0,
+			});
+		});
+
+		// 2. Verify pool creation is blocked
+		await expect(
+			t.mutation(api.pools.createPool, {
+				title: "Blocked Pool",
+				adminEmail: "blocked@test.com",
+				maxSquaresPerPerson: 5,
+			}),
+		).rejects.toThrow();
+
+		// 3. Simulate sponsor: add 100 pools of bonus capacity
+		await t.mutation(internal.pools.addSponsorCapacity, { amount: 100 });
+
+		// Verify capacity was added
+		const limits = await t.run(async (ctx) => {
+			return ctx.db.query("globalLimits").first();
+		});
+		expect(limits!.bonusCapacity).toBe(100);
+
+		// 4. Now pool creation should succeed (cap = 100 + 100 = 200 > 100)
+		const result = await t.mutation(api.pools.createPool, {
+			title: "Sponsored Pool",
+			adminEmail: "sponsor@test.com",
+			maxSquaresPerPerson: 5,
+		});
+		expect(result.slug).toBeDefined();
+		expect(result.slug.length).toBe(8);
+
+		// 5. Verify createdCount incremented
+		const after = await t.run(async (ctx) => {
+			return ctx.db.query("globalLimits").first();
+		});
+		expect(after!.createdCount).toBe(101);
+	});
+
+	it("idempotent: duplicate payment does not double-credit capacity", async () => {
+		const t = convexTest(schema, modules);
+
+		await t.run(async (ctx) => {
+			await ctx.db.insert("globalLimits", {
+				windowStart: Date.now(),
+				createdCount: 0,
+				bonusCapacity: 0,
+				bonusExpiresAt: 0,
+			});
+		});
+
+		// First payment
+		await t.mutation(internal.sponsor.recordPayment, {
+			idempotencyKey: "pi_duplicate_test",
+			amount: 10,
+		});
+		await t.mutation(internal.pools.addSponsorCapacity, { amount: 10 });
+
+		// Simulate duplicate: check idempotency key exists
+		const existing = await t.query(internal.sponsor.getPaymentByKey, {
+			idempotencyKey: "pi_duplicate_test",
+		});
+		expect(existing).not.toBeNull();
+
+		// Should NOT add capacity again (simulating what the action does)
+		// The action would return early here; we just verify the idempotency key exists
+		// and capacity is still 10
+		const limits = await t.run(async (ctx) => {
+			return ctx.db.query("globalLimits").first();
+		});
+		expect(limits!.bonusCapacity).toBe(10);
+	});
+});

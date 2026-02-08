@@ -38,4 +38,58 @@ test.describe("Landing", () => {
 		const playLink = page.locator('a[href*="/play/"]').first();
 		await expect(playLink).toBeVisible({ timeout: 5000 });
 	});
+
+	test("sponsor CTA appears when pool creation returns 429", async ({
+		page,
+	}) => {
+		await page.goto("/");
+		// Clear any prior pool creation
+		await page.evaluate(() => {
+			localStorage.removeItem("gamesquares_pool_created_at");
+			localStorage.removeItem("gamesquares_created_pool_slug");
+			localStorage.removeItem("gamesquares_dev_pool_link");
+		});
+		await page.reload();
+
+		// Mock /api/pools to return 429 (rate limit)
+		await page.route("**/api/pools", (route) =>
+			route.fulfill({
+				status: 429,
+				contentType: "application/json",
+				body: JSON.stringify({
+					error: "Pool creation limit reached. Try again later.",
+				}),
+			}),
+		);
+
+		// Mock /api/sponsor/config to return sponsor info
+		await page.route("**/api/sponsor/config", (route) =>
+			route.fulfill({
+				status: 200,
+				contentType: "application/json",
+				body: JSON.stringify({ poolsCount: 100, displayPrice: "$10" }),
+			}),
+		);
+
+		// Navigate to configure step
+		await page.getByTestId("landing-create-pool-cta").click();
+		await expect(
+			page.getByRole("heading", { name: /Set up your pool/i }),
+		).toBeVisible();
+
+		// Fill form and submit
+		await page.getByLabel(/Pool title/i).fill("Rate Limited Pool");
+		await page.getByLabel(/Your email/i).fill("limited@example.com");
+		await page.getByTestId("landing-create-pool-submit").click();
+
+		// Verify error message and sponsor CTA appear
+		await expect(
+			page.getByText("Pool creation limit reached. Try again later."),
+		).toBeVisible({ timeout: 5000 });
+		await expect(page.getByTestId("sponsor-cta")).toBeVisible();
+		await expect(page.getByTestId("sponsor-cta")).toContainText(
+			"Sponsor 100 pools",
+		);
+		await expect(page.getByTestId("sponsor-cta")).toContainText("$10");
+	});
 });
