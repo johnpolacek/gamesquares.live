@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { Suspense, useCallback, useState } from "react";
 import { AdminBoard } from "@/components/admin-board";
 import { LandingHero } from "@/components/landing-hero";
 import { PlayerBoard } from "@/components/player-board";
@@ -85,7 +85,22 @@ export default function Home() {
 	}, [pool]);
 
 	if (view === "landing" || !pool) {
-		return <LandingHero />;
+		return (
+			<Suspense
+				fallback={
+					<main className="flex min-h-dvh flex-col items-center justify-center px-6 py-12">
+						<div className="flex w-full max-w-md flex-col items-center gap-10 text-center">
+							<h1 className="font-mono text-4xl font-bold tracking-tight text-foreground">
+								GameSquares
+							</h1>
+							<div className="h-12 w-48 animate-pulse rounded-lg bg-muted" />
+						</div>
+					</main>
+				}
+			>
+				<LandingHero />
+			</Suspense>
+		);
 	}
 
 	const shareUrl =
