@@ -591,40 +591,67 @@ export default function PlayPage() {
 				</div>
 			)}
 
-			{gameData?.found && (
-				<div className="w-full max-w-sm mx-4 sm:mx-auto mt-2 rounded-lg bg-card px-3 py-2 ring-1 ring-border">
+		{gameData?.found && (
+			<div className="w-full max-w-sm mx-4 sm:mx-auto mt-2 rounded-lg bg-card px-3 py-2 ring-1 ring-border">
+				<div className="flex items-center justify-between">
 					<p className="text-xs font-semibold text-muted-foreground">
 						{gameData.game.name}
 					</p>
-					<div className="mt-1 flex flex-col gap-y-0.5 text-sm font-medium text-foreground">
-						{quarterDisplays
-							? quarterDisplays.map((q) => {
-									const isFinal = isGameComplete && q.isLatest;
-									const rowWins = isFinal && q.rowTeamScore > q.colTeamScore;
-									const colWins = isFinal && q.colTeamScore > q.rowTeamScore;
-									return (
-										<span key={q.label}>
-											{isFinal ? "FINAL" : q.label}:{" "}
-											<span className={rowWins ? "font-extrabold" : ""}>
-												{q.rowTeamScore}
-											</span>
-											–
-											<span className={colWins ? "font-extrabold" : ""}>
-												{q.colTeamScore}
-											</span>
-											{q.playerName != null &&
-												` (${q.isQuarterComplete || isGameComplete ? "winner" : q.isLatest ? "currently winning" : "winner"}: ${q.playerName})`}
-										</span>
-									);
-								})
-							: gameData.game.quarters.map((q) => (
-									<span key={q.label}>
-										{q.label}: {q.rowTeamScore}–{q.colTeamScore}
-									</span>
-								))}
-					</div>
+					{/* Compact possession indicator */}
+					{gameData.game.possession && gameData.game.possession !== "none" && !isGameComplete && (
+						<span className={`flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider ${
+							gameData.game.isRedZone
+								? "text-red-600"
+								: "text-amber-600"
+						}`}>
+							🏈 {gameData.game.possession === "home" ? "Patriots" : "Seahawks"}
+							{gameData.game.isRedZone && (
+								<span className="rounded-full bg-red-500 px-1 py-px text-[8px] text-white animate-pulse">
+									RZ
+								</span>
+							)}
+						</span>
+					)}
 				</div>
-			)}
+				{/* Down and distance */}
+				{gameData.game.downDistance && !isGameComplete && (
+					<p className={`text-[10px] font-medium mt-0.5 ${
+						gameData.game.isRedZone
+							? "text-red-500"
+							: "text-muted-foreground/70"
+					}`}>
+						{gameData.game.downDistance}
+					</p>
+				)}
+				<div className="mt-1 flex flex-col gap-y-0.5 text-sm font-medium text-foreground">
+					{quarterDisplays
+						? quarterDisplays.map((q) => {
+								const isFinal = isGameComplete && q.isLatest;
+								const rowWins = isFinal && q.rowTeamScore > q.colTeamScore;
+								const colWins = isFinal && q.colTeamScore > q.rowTeamScore;
+								return (
+									<span key={q.label}>
+										{isFinal ? "FINAL" : q.label}:{" "}
+										<span className={rowWins ? "font-extrabold" : ""}>
+											{q.rowTeamScore}
+										</span>
+										–
+										<span className={colWins ? "font-extrabold" : ""}>
+											{q.colTeamScore}
+										</span>
+										{q.playerName != null &&
+											` (${q.isQuarterComplete || isGameComplete ? "winner" : q.isLatest ? "currently winning" : "winner"}: ${q.playerName})`}
+									</span>
+								);
+							})
+						: gameData.game.quarters.map((q) => (
+								<span key={q.label}>
+									{q.label}: {q.rowTeamScore}–{q.colTeamScore}
+								</span>
+							))}
+				</div>
+			</div>
+		)}
 
 			{!canPick && !boardFull && pool.status === "open" && (
 				<div className="bg-muted px-4 py-2.5">

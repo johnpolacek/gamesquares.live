@@ -17,6 +17,10 @@ const quarterValidator = v.object({
  * Get the current global game (most recently updated).
  * Used by play and admin UIs to show scores and compute quarter winners.
  */
+const possessionValidator = v.optional(
+	v.union(v.literal("home"), v.literal("away"), v.literal("none")),
+);
+
 export const getCurrentGame = query({
 	args: {},
 	returns: v.union(
@@ -28,6 +32,9 @@ export const getCurrentGame = query({
 				externalId: v.optional(v.string()),
 				quarters: v.array(quarterValidator),
 				gameComplete: v.optional(v.boolean()),
+				possession: possessionValidator,
+				downDistance: v.optional(v.string()),
+				isRedZone: v.optional(v.boolean()),
 				updatedAt: v.number(),
 				source: v.union(v.literal("manual"), v.literal("scrape")),
 			}),
@@ -51,6 +58,9 @@ export const getCurrentGame = query({
 				externalId: game.externalId,
 				quarters: game.quarters,
 				gameComplete: game.gameComplete,
+				possession: game.possession,
+				downDistance: game.downDistance,
+				isRedZone: game.isRedZone,
 				updatedAt: game.updatedAt,
 				source: game.source,
 			},
@@ -126,6 +136,9 @@ export const setScoresFromScrape = internalMutation({
 		externalId: v.optional(v.string()),
 		quarters: v.array(quarterValidator),
 		gameComplete: v.optional(v.boolean()),
+		possession: possessionValidator,
+		downDistance: v.optional(v.string()),
+		isRedZone: v.optional(v.boolean()),
 	},
 	handler: async (ctx, args) => {
 		const now = Date.now();
@@ -134,6 +147,9 @@ export const setScoresFromScrape = internalMutation({
 			externalId: args.externalId,
 			quarters: args.quarters,
 			gameComplete: args.gameComplete,
+			possession: args.possession,
+			downDistance: args.downDistance,
+			isRedZone: args.isRedZone,
 			updatedAt: now,
 			source: "scrape",
 		});

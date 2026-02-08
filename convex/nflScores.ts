@@ -18,9 +18,10 @@ type Quarter = {
 type EspnLinescore = { value: number };
 
 type EspnCompetitor = {
+	id?: string;
 	homeAway: string;
 	score: string;
-	team?: { abbreviation: string; displayName: string };
+	team?: { id?: string; abbreviation: string; displayName: string };
 	linescores?: EspnLinescore[];
 };
 
@@ -36,6 +37,13 @@ type EspnStatus = {
 	type?: EspnStatusType;
 };
 
+type EspnSituation = {
+	possession?: string; // team ID of team with ball
+	downDistanceText?: string; // e.g. "3rd & 7"
+	possessionText?: string; // e.g. "SEA 3rd & 7 at NE 42"
+	isRedZone?: boolean;
+};
+
 type EspnEvent = {
 	id: string;
 	name: string;
@@ -44,6 +52,7 @@ type EspnEvent = {
 	competitions?: Array<{
 		competitors?: EspnCompetitor[];
 		notes?: EspnNote[];
+		situation?: EspnSituation;
 	}>;
 	status?: EspnStatus;
 };
@@ -226,13 +235,32 @@ export const fetchAndUpdateScores = action({
 			gameCompleted,
 		);
 
+		// Extract possession info from situation
+		const situation = comp.situation;
+		let possession: "home" | "away" | "none" = "none";
+		if (situation?.possession) {
+			const homeTeamId = home.id ?? home.team?.id;
+			const awayTeamId = away.id ?? away.team?.id;
+			if (situation.possession === homeTeamId) {
+				possession = "home";
+			} else if (situation.possession === awayTeamId) {
+				possession = "away";
+			}
+		}
+		const downDistance = situation?.possessionText ?? situation?.downDistanceText ?? undefined;
+		const isRedZone = situation?.isRedZone ?? undefined;
+
 		// Dedup: check if the latest game row already has identical data
 		const latestGame = await ctx.runQuery(internal.games.getLatestGame, {});
 		if (latestGame) {
 			const sameScores = quartersEqual(quarters, latestGame.quarters);
 			const sameComplete =
 				(gameComplete || false) === (latestGame.gameComplete || false);
-			if (sameScores && sameComplete) {
+			const samePossession =
+				(possession || "none") === (latestGame.possession || "none");
+			const sameDownDistance =
+				(downDistance || "") === (latestGame.downDistance || "");
+			if (sameScores && sameComplete && samePossession && sameDownDistance) {
 				return { updated: false as const, reason: "scores unchanged" };
 			}
 		}
@@ -245,6 +273,9 @@ export const fetchAndUpdateScores = action({
 			externalId: event.id,
 			quarters,
 			gameComplete: gameComplete || undefined,
+			possession,
+			downDistance,
+			isRedZone,
 		});
 
 		return { updated: true as const, quarters: quarters.length };

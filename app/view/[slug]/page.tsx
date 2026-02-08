@@ -55,17 +55,31 @@ function computeWhatIfs(
 		colNumbers: (number | null)[];
 		squares: { claimedBy: { name: string } | null }[][];
 	},
+	possession: "home" | "away" | "none",
 ): WhatIfScenario[] {
-	const scenarios: {
+	const homeScenarios: {
 		label: string;
 		teamSide: "row" | "col";
 		points: number;
 	}[] = [
 		{ label: "Patriots FG", teamSide: "row", points: 3 },
 		{ label: "Patriots TD", teamSide: "row", points: 7 },
+	];
+
+	const awayScenarios: {
+		label: string;
+		teamSide: "row" | "col";
+		points: number;
+	}[] = [
 		{ label: "Seahawks FG", teamSide: "col", points: 3 },
 		{ label: "Seahawks TD", teamSide: "col", points: 7 },
 	];
+
+	// Order: possessing team first
+	const scenarios =
+		possession === "away"
+			? [...awayScenarios, ...homeScenarios]
+			: [...homeScenarios, ...awayScenarios];
 
 	return scenarios.map((s) => {
 		const newRowScore =
@@ -166,6 +180,11 @@ export default function ViewPage() {
 		quarters.length > 0 ? quarters[quarters.length - 1] : null;
 	const isGameComplete = game?.gameComplete === true;
 
+	// Possession info
+	const possession = game?.possession ?? "none"; // "home" | "away" | "none"
+	const downDistance = game?.downDistance ?? null;
+	const isRedZone = game?.isRedZone === true;
+
 	// Current scores
 	const currentRowScore = latestQuarter?.rowTeamScore ?? 0;
 	const currentColScore = latestQuarter?.colTeamScore ?? 0;
@@ -209,10 +228,10 @@ export default function ViewPage() {
 			})
 		: [];
 
-	// What-if scenarios
+	// What-if scenarios (possessing team first)
 	const whatIfs =
 		numbersAssigned && !isGameComplete
-			? computeWhatIfs(currentRowScore, currentColScore, pool)
+			? computeWhatIfs(currentRowScore, currentColScore, pool, possession)
 			: [];
 
 	return (
@@ -323,46 +342,69 @@ export default function ViewPage() {
 							<h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">
 								Score
 							</h3>
-							<div className="flex items-center justify-center gap-6 rounded-lg bg-white p-5 ring-1 ring-border">
-								<div className="flex flex-col items-center">
-									<span className="text-xs font-bold uppercase tracking-wider text-blue-600">
-										Patriots
-									</span>
-									<span
-										key={`patriots-${currentRowScore}`}
-										className="text-5xl font-black tabular-nums text-foreground animate-score-pop"
-										data-testid="view-home-score"
-									>
-										{currentRowScore}
-									</span>
-								</div>
-								<div className="flex flex-col items-center">
-									<span className="text-base font-bold text-muted-foreground/40">
-										vs
-									</span>
-									{latestQuarter && !isGameComplete && (
-										<span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-											{latestQuarter.label}
+							<div className="flex flex-col gap-2.5 rounded-lg bg-white p-5 ring-1 ring-border">
+								<div className="flex items-center justify-center gap-6">
+									<div className="flex flex-col items-center">
+										<span className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-blue-600">
+											Patriots
+											{possession === "home" && !isGameComplete && (
+												<span className="text-sm" title="Has possession">🏈</span>
+											)}
 										</span>
-									)}
-									{isGameComplete && (
-										<span className="text-xs font-bold text-emerald-600 uppercase tracking-wider animate-scale-in">
-											Final
+										<span
+											key={`patriots-${currentRowScore}`}
+											className="text-5xl font-black tabular-nums text-foreground animate-score-pop"
+											data-testid="view-home-score"
+										>
+											{currentRowScore}
 										</span>
-									)}
+									</div>
+									<div className="flex flex-col items-center">
+										<span className="text-base font-bold text-muted-foreground/40">
+											vs
+										</span>
+										{latestQuarter && !isGameComplete && (
+											<span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+												{latestQuarter.label}
+											</span>
+										)}
+										{isGameComplete && (
+											<span className="text-xs font-bold text-emerald-600 uppercase tracking-wider animate-scale-in">
+												Final
+											</span>
+										)}
+									</div>
+									<div className="flex flex-col items-center">
+										<span className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-emerald-600">
+											{possession === "away" && !isGameComplete && (
+												<span className="text-sm" title="Has possession">🏈</span>
+											)}
+											Seahawks
+										</span>
+										<span
+											key={`seahawks-${currentColScore}`}
+											className="text-5xl font-black tabular-nums text-foreground animate-score-pop"
+											data-testid="view-away-score"
+										>
+											{currentColScore}
+										</span>
+									</div>
 								</div>
-								<div className="flex flex-col items-center">
-									<span className="text-xs font-bold uppercase tracking-wider text-emerald-600">
-										Seahawks
-									</span>
-									<span
-										key={`seahawks-${currentColScore}`}
-										className="text-5xl font-black tabular-nums text-foreground animate-score-pop"
-										data-testid="view-away-score"
-									>
-										{currentColScore}
-									</span>
-								</div>
+								{/* Down and distance */}
+								{downDistance && !isGameComplete && (
+									<div className={`flex items-center justify-center gap-2 rounded-md px-3 py-1.5 text-xs font-semibold tracking-wide ${
+										isRedZone
+											? "bg-red-500/10 text-red-600 ring-1 ring-red-500/30"
+											: "bg-muted/50 text-muted-foreground"
+									}`}>
+										{isRedZone && (
+											<span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white animate-pulse">
+												Red Zone
+											</span>
+										)}
+										<span>{downDistance}</span>
+									</div>
+								)}
 							</div>
 						</div>
 					)}
@@ -446,41 +488,55 @@ export default function ViewPage() {
 								Next Score Wins
 							</h3>
 							<div className="grid grid-cols-2 gap-2.5">
-								{whatIfs.map((s) => (
-									<div
-										key={s.label}
-										className={`rounded-lg p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
-											s.teamSide === "row"
-												? "bg-blue-500/8 ring-1 ring-blue-500/20"
-												: "bg-emerald-500/8 ring-1 ring-emerald-500/20"
-										}`}
-									>
-										<div className="flex items-center gap-1.5">
-											<span className="text-xl">
-												{s.points === 3 ? "🏈" : "🏈"}
-											</span>
-											<span
-												className={`text-xs font-bold uppercase tracking-wider ${
-													s.teamSide === "row"
-														? "text-blue-600"
-														: "text-emerald-600"
-												}`}
-											>
-												{s.label}
-											</span>
-										</div>
-										<div className="mt-1.5 text-sm font-semibold text-muted-foreground tabular-nums">
-											{s.newRowScore} - {s.newColScore}
-										</div>
-										<div className="mt-2 text-base font-bold text-foreground truncate">
-											{s.playerName ?? (
-												<span className="text-muted-foreground/40 font-normal italic">
-													Unclaimed
+								{whatIfs.map((s) => {
+									const isTeamWithBall =
+										(s.teamSide === "row" && possession === "home") ||
+										(s.teamSide === "col" && possession === "away");
+									return (
+										<div
+											key={s.label}
+											className={`rounded-lg p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+												s.teamSide === "row"
+													? isTeamWithBall
+														? "bg-blue-500/12 ring-2 ring-blue-500/40 shadow-sm"
+														: "bg-blue-500/8 ring-1 ring-blue-500/20"
+													: isTeamWithBall
+														? "bg-emerald-500/12 ring-2 ring-emerald-500/40 shadow-sm"
+														: "bg-emerald-500/8 ring-1 ring-emerald-500/20"
+											}`}
+										>
+											<div className="flex items-center gap-1.5">
+												<span className="text-xl">
+													{s.points === 3 ? "🏈" : "🏈"}
 												</span>
-											)}
+												<span
+													className={`text-xs font-bold uppercase tracking-wider ${
+														s.teamSide === "row"
+															? "text-blue-600"
+															: "text-emerald-600"
+													}`}
+												>
+													{s.label}
+												</span>
+												{isTeamWithBall && (
+													<span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-500/10 rounded-full px-1.5 py-0.5">
+														Has ball
+													</span>
+												)}
+											</div>
+											<div className="mt-1.5 text-sm font-semibold text-muted-foreground tabular-nums">
+												{s.newRowScore} - {s.newColScore}
+											</div>
+											<div className="mt-2 text-base font-bold text-foreground truncate">
+												{s.playerName ?? (
+													<span className="text-muted-foreground/40 font-normal italic">
+														Unclaimed
+													</span>
+												)}
+											</div>
 										</div>
-									</div>
-								))}
+									);
+								})}
 							</div>
 						</div>
 					)}

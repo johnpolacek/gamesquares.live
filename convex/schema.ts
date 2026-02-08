@@ -58,6 +58,12 @@ export default defineSchema({
 			}),
 		),
 		gameComplete: v.optional(v.boolean()),
+		// Ball possession: "home" (row team), "away" (col team), or "none" (halftime/dead ball)
+		possession: v.optional(
+			v.union(v.literal("home"), v.literal("away"), v.literal("none")),
+		),
+		downDistance: v.optional(v.string()), // e.g. "SEA 3rd & 7 at NE 42"
+		isRedZone: v.optional(v.boolean()),
 		updatedAt: v.number(),
 		source: v.union(v.literal("manual"), v.literal("scrape")),
 	}).index("by_updated", ["updatedAt"]),
