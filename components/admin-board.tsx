@@ -212,11 +212,15 @@ export function AdminBoard({
 						Play (pick squares)
 					</p>
 					<div className="flex gap-2">
-						<div className="flex flex-1 items-center overflow-hidden rounded-lg bg-card ring-1 ring-border">
-							<span className="truncate px-3 py-2.5 text-xs text-muted-foreground">
-								{shareUrl}
-							</span>
-						</div>
+						<a
+							href={shareUrl}
+							target="_blank"
+							rel="noopener noreferrer"
+							title={shareUrl}
+							className="flex flex-1 min-w-0 items-center truncate rounded-lg bg-card px-3 py-2.5 text-xs text-primary underline-offset-2 hover:underline focus:outline-none focus:ring-2 focus:ring-primary ring-1 ring-border"
+						>
+							{shareUrl}
+						</a>
 						<button
 							onClick={handleCopy}
 							className={`flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground transition-all active:scale-[0.97] cursor-pointer ${copied ? "animate-scale-in" : ""}`}
@@ -241,47 +245,51 @@ export function AdminBoard({
 									</svg>
 									Copied
 								</>
-						) : (
-							<>
-								<svg
-									width="14"
-									height="14"
-									viewBox="0 0 16 16"
-									fill="none"
-									aria-hidden="true"
-								>
-									<rect
-										x="5"
-										y="5"
-										width="8"
-										height="8"
-										rx="1.5"
-										stroke="currentColor"
-										strokeWidth="1.5"
-									/>
-									<path
-										d="M3 11V3.5C3 3.22386 3.22386 3 3.5 3H11"
-										stroke="currentColor"
-										strokeWidth="1.5"
-										strokeLinecap="round"
-									/>
-								</svg>
-								Share
-							</>
-						)}
-					</button>
-				</div>
+							) : (
+								<>
+									<svg
+										width="14"
+										height="14"
+										viewBox="0 0 16 16"
+										fill="none"
+										aria-hidden="true"
+									>
+										<rect
+											x="5"
+											y="5"
+											width="8"
+											height="8"
+											rx="1.5"
+											stroke="currentColor"
+											strokeWidth="1.5"
+										/>
+										<path
+											d="M3 11V3.5C3 3.22386 3.22386 3 3.5 3H11"
+											stroke="currentColor"
+											strokeWidth="1.5"
+											strokeLinecap="round"
+										/>
+									</svg>
+									Share
+								</>
+							)}
+						</button>
+					</div>
 				</div>
 				<div>
 					<p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
 						View (read-only live board)
 					</p>
 					<div className="flex gap-2">
-						<div className="flex flex-1 items-center overflow-hidden rounded-lg bg-card ring-1 ring-border">
-							<span className="truncate px-3 py-2.5 text-xs text-muted-foreground">
-								{viewUrl}
-							</span>
-						</div>
+						<a
+							href={viewUrl}
+							target="_blank"
+							rel="noopener noreferrer"
+							title={viewUrl}
+							className="flex flex-1 min-w-0 items-center truncate rounded-lg bg-card px-3 py-2.5 text-xs text-primary underline-offset-2 hover:underline focus:outline-none focus:ring-2 focus:ring-primary ring-1 ring-border"
+						>
+							{viewUrl}
+						</a>
 						<button
 							onClick={handleCopyView}
 							className={`flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-4 py-2.5 text-xs font-semibold text-foreground transition-all active:scale-[0.97] cursor-pointer hover:bg-muted ${copiedView ? "animate-scale-in" : ""}`}
