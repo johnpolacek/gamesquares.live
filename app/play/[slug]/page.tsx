@@ -477,6 +477,21 @@ export default function PlayPage() {
 						</div>
 					</div>
 
+					<div className="pt-2">
+						<p>
+							Not sure how Squares works?{" "}
+							<Link
+								href="/how-to-play"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-xs text-muted-foreground/70 hover:text-muted-foreground underline transition-colors"
+							>
+								Read this how-to-play guide
+							</Link>
+							.
+						</p>
+					</div>
+
 					{boardFull ? (
 						<>
 							<div className="w-full rounded-lg bg-muted p-4">
@@ -596,14 +611,6 @@ export default function PlayPage() {
 						</div>
 					)}
 				</div>
-				<Link
-					href="/how-to-play"
-					target="_blank"
-					rel="noopener noreferrer"
-					className="text-xs text-muted-foreground/70 hover:text-muted-foreground underline transition-colors"
-				>
-					How does this work?
-				</Link>
 			</main>
 		);
 	}
@@ -890,14 +897,20 @@ export default function PlayPage() {
 					</div>
 				</div>
 			)}
-			<Link
-				href="/how-to-play"
-				target="_blank"
-				rel="noopener noreferrer"
-				className="pb-6 text-center text-xs text-muted-foreground/70 hover:text-muted-foreground underline transition-colors"
-			>
-				How does this work?
-			</Link>
+			<div className="p-4">
+				<p>
+					Not sure how Squares works?{" "}
+					<Link
+						href="/how-to-play"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="text-xs text-muted-foreground/70 hover:text-muted-foreground underline transition-colors"
+					>
+						Read this how-to-play guide
+					</Link>
+					.
+				</p>
+			</div>
 		</div>
 	);
 }
