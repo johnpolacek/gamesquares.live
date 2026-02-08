@@ -38,6 +38,8 @@ export function AdminBoard({
 	const [copied, setCopied] = useState(false);
 	const [copiedView, setCopiedView] = useState(false);
 	const viewUrl = shareUrl.replace(/\/play\//, "/view/");
+	const displayUrl = (url: string) =>
+		url.replace(/^https?:\/\/(www\.)?/, "");
 	const [maxError, setMaxError] = useState<string | null>(null);
 	const [isAssigning, setIsAssigning] = useState(false);
 	const [isDistributing, setIsDistributing] = useState(false);
@@ -219,7 +221,7 @@ export function AdminBoard({
 							title={shareUrl}
 							className="flex flex-1 min-w-0 items-center truncate text-xs text-primary underline-offset-2 hover:underline focus:outline-none"
 						>
-							{shareUrl}
+							{displayUrl(shareUrl)}
 						</a>
 						<button
 							onClick={handleCopy}
@@ -288,7 +290,7 @@ export function AdminBoard({
 							title={viewUrl}
 							className="flex flex-1 min-w-0 items-center truncate text-xs text-primary underline-offset-2 hover:underline focus:outline-none"
 						>
-							{viewUrl}
+							{displayUrl(viewUrl)}
 						</a>
 						<button
 							onClick={handleCopyView}
