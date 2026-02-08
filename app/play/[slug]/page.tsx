@@ -477,7 +477,7 @@ export default function PlayPage() {
 						</div>
 					</div>
 
-					<div className="-mt-2 text-muted-foreground/80 text-xs">
+					<div className="-mt-6 text-muted-foreground/80 text-xs">
 						<p>
 							Not sure how Squares works?{" "}
 							<Link
