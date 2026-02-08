@@ -217,7 +217,7 @@ export function AdminBoard({
 							target="_blank"
 							rel="noopener noreferrer"
 							title={shareUrl}
-							className="flex flex-1 min-w-0 items-center truncate rounded-lg bg-card px-3 py-2.5 text-xs text-primary underline-offset-2 hover:underline focus:outline-none focus:ring-2 focus:ring-primary ring-1 ring-border"
+							className="flex flex-1 min-w-0 items-center truncate text-xs text-primary underline-offset-2 hover:underline focus:outline-none"
 						>
 							{shareUrl}
 						</a>
@@ -286,7 +286,7 @@ export function AdminBoard({
 							target="_blank"
 							rel="noopener noreferrer"
 							title={viewUrl}
-							className="flex flex-1 min-w-0 items-center truncate rounded-lg bg-card px-3 py-2.5 text-xs text-primary underline-offset-2 hover:underline focus:outline-none focus:ring-2 focus:ring-primary ring-1 ring-border"
+							className="flex flex-1 min-w-0 items-center truncate text-xs text-primary underline-offset-2 hover:underline focus:outline-none"
 						>
 							{viewUrl}
 						</a>

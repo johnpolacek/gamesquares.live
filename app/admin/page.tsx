@@ -526,6 +526,27 @@ export default function AdminPage() {
 								Quarters
 							</span>
 							<div className="grid gap-4 rounded-md border border-border p-4">
+								{/* Column headers */}
+								<div className="flex items-center gap-3">
+									<span className="w-8" />
+									<div className="flex gap-2">
+										<div className="w-full text-center">
+											<span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
+												{diagResult?.homeTeam
+													? `${diagResult.homeTeam.abbreviation} (Row)`
+													: "Row (home)"}
+											</span>
+										</div>
+										<div className="w-full text-center">
+											<span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600">
+												{diagResult?.awayTeam
+													? `${diagResult.awayTeam.abbreviation} (Col)`
+													: "Col (away)"}
+											</span>
+										</div>
+									</div>
+									<span className="w-[60px]" />
+								</div>
 								{QUARTERS.map((q) => (
 									<div key={q} className="flex items-center gap-3">
 										<span className="w-8 text-sm text-muted-foreground">
@@ -534,7 +555,9 @@ export default function AdminPage() {
 										<div className="flex gap-2">
 											<div>
 												<label htmlFor={`${q}-row`} className="sr-only">
-													Row team score
+													{diagResult?.homeTeam
+														? `${diagResult.homeTeam.abbreviation} score`
+														: "Row team score"}
 												</label>
 												<input
 													id={`${q}-row`}
@@ -557,7 +580,9 @@ export default function AdminPage() {
 											</div>
 											<div>
 												<label htmlFor={`${q}-col`} className="sr-only">
-													Col team score
+													{diagResult?.awayTeam
+														? `${diagResult.awayTeam.abbreviation} score`
+														: "Col team score"}
 												</label>
 												<input
 													id={`${q}-col`}
@@ -603,8 +628,10 @@ export default function AdminPage() {
 								))}
 							</div>
 							<p className="text-xs text-muted-foreground">
-								Row = first team (e.g. row numbers), Col = second team (e.g.
-								column numbers). Scores must be 0&ndash;99. Check &quot;Final&quot;
+								{diagResult?.homeTeam && diagResult?.awayTeam
+									? `${diagResult.homeTeam.name} = Row (top numbers on grid), ${diagResult.awayTeam.name} = Col (side numbers).`
+									: "Row = home team (top numbers on grid), Col = away team (side numbers)."}{" "}
+								Scores must be 0&ndash;99. Check &quot;Final&quot;
 								when a quarter is complete.
 							</p>
 						</div>
