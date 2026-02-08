@@ -15,59 +15,106 @@ import {
 
 const squareOptions = [1, 2, 4, 5, 10];
 const CREATED_AT_KEY = "gamesquares_pool_created_at";
+const CREATED_POOL_SLUG_KEY = "gamesquares_created_pool_slug";
 const DEV_POOL_LINK_KEY = "gamesquares_dev_pool_link";
 const COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes
 
+/** One row per pool: merge admin + player entries, show Play + Manage when user is creator */
+type MergedPool = {
+	slug: string;
+	title: string;
+	isAdmin: boolean;
+	joinedAt: number;
+};
+
+function mergePoolsBySlug(
+	pools: PoolHistoryEntry[],
+	createdPoolSlug: string | null,
+): MergedPool[] {
+	const bySlug = new Map<string, MergedPool>();
+	for (const entry of pools) {
+		const existing = bySlug.get(entry.slug);
+		const isAdmin =
+			entry.role === "admin" || entry.slug === createdPoolSlug;
+		if (!existing) {
+			bySlug.set(entry.slug, {
+				slug: entry.slug,
+				title: entry.title,
+				isAdmin,
+				joinedAt: entry.joinedAt,
+			});
+		} else {
+			bySlug.set(entry.slug, {
+				...existing,
+				isAdmin: existing.isAdmin || isAdmin,
+				joinedAt: Math.max(existing.joinedAt, entry.joinedAt),
+			});
+		}
+	}
+	return [...bySlug.values()].sort((a, b) => b.joinedAt - a.joinedAt);
+}
+
 function YourPools({
 	pools,
+	createdPoolSlug,
 	onRemove,
 }: {
 	pools: PoolHistoryEntry[];
-	onRemove: (slug: string, role: "admin" | "player") => void;
+	createdPoolSlug?: string | null;
+	onRemove: (slug: string) => void;
 }) {
-	if (pools.length === 0) return null;
+	const merged = mergePoolsBySlug(pools, createdPoolSlug ?? null);
+	if (merged.length === 0) return null;
 	return (
 		<section className="w-full max-w-md opacity-0 animate-fade-in-up">
 			<h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
 				Your Pools
 			</h3>
-			<div className="flex flex-col gap-2">
-				{pools.map((entry) => (
+			<div className="flex flex-col gap-3">
+				{merged.map((pool) => (
 					<div
-						key={`${entry.slug}-${entry.role}`}
-						className="group flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:bg-accent/50"
+						key={pool.slug}
+						className="group relative flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:border-primary/30 hover:shadow-md"
 					>
-						<div className="flex-1 min-w-0">
-							<p className="truncate text-sm font-medium text-foreground">
-								{entry.title}
-							</p>
-							<p className="text-xs text-muted-foreground">
-								{entry.role === "admin" ? "Admin" : "Player"}
-							</p>
+						<div className="flex items-start justify-between gap-3">
+							<div className="min-w-0 flex-1">
+								<p className="truncate text-base font-semibold text-foreground">
+									{pool.title}
+								</p>
+								<span
+									className={`inline-block mt-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+										pool.isAdmin
+											? "bg-primary/15 text-primary"
+											: "bg-muted text-muted-foreground"
+									}`}
+								>
+									{pool.isAdmin ? "You created this" : "Player"}
+								</span>
+							</div>
+							<button
+								type="button"
+								onClick={() => onRemove(pool.slug)}
+								className="absolute top-3 right-3 rounded-md p-1.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-muted hover:text-foreground"
+								aria-label={`Remove ${pool.title} from list`}
+							>
+								<XIcon className="h-4 w-4" />
+							</button>
 						</div>
-						<div className="flex items-center gap-2">
+						<div className="flex flex-wrap gap-2">
 							<Link
-								href={`/play/${entry.slug}`}
-								className="rounded-md bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
+								href={`/play/${pool.slug}`}
+								className="inline-flex items-center justify-center rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
 							>
 								Play
 							</Link>
-							{entry.role === "admin" && (
+							{pool.isAdmin && (
 								<Link
-									href={`/go/${entry.slug}`}
-									className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+									href={`/go/${pool.slug}`}
+									className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
 								>
 									Manage
 								</Link>
 							)}
-							<button
-								type="button"
-								onClick={() => onRemove(entry.slug, entry.role)}
-								className="rounded-md p-1 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground"
-								aria-label={`Remove ${entry.title}`}
-							>
-								<XIcon className="h-3.5 w-3.5" />
-							</button>
 						</div>
 					</div>
 				))}
@@ -103,6 +150,7 @@ export function LandingHero() {
 	const { executeRecaptcha } = useGoogleReCaptcha();
 	const [step, setStep] = useState<"hero" | "configure" | "success">("hero");
 	const [createdAt, setCreatedAt] = useState<number | null>(null);
+	const [createdPoolSlug, setCreatedPoolSlug] = useState<string | null>(null);
 	const [devPoolLink, setDevPoolLink] = useState<string | null>(null);
 	const [poolHistory, setPoolHistory] = useState<PoolHistoryEntry[]>([]);
 	const [title, setTitle] = useState("");
@@ -123,12 +171,15 @@ export function LandingHero() {
 			const ts = Number.parseInt(raw, 10);
 			if (!Number.isNaN(ts)) setCreatedAt(ts);
 		}
+		const slug = localStorage.getItem(CREATED_POOL_SLUG_KEY);
+		if (slug) setCreatedPoolSlug(slug);
 		const link = localStorage.getItem(DEV_POOL_LINK_KEY);
 		if (link) setDevPoolLink(link);
 		setPoolHistory(getPoolHistory());
 		if (process.env.NODE_ENV === "development") {
 			console.log("[LandingHero] localStorage on mount:", {
 				CREATED_AT_KEY: raw,
+				CREATED_POOL_SLUG_KEY: slug,
 				DEV_POOL_LINK_KEY: link ? `${link.slice(0, 40)}...` : null,
 				hasPoolLink: !!link,
 			});
@@ -195,6 +246,10 @@ export function LandingHero() {
 			}
 			// Save to pool history so returning users see their pool on the homepage
 			if (data.slug) {
+				if (typeof window !== "undefined") {
+					localStorage.setItem(CREATED_POOL_SLUG_KEY, data.slug);
+					setCreatedPoolSlug(data.slug);
+				}
 				const entry: PoolHistoryEntry = {
 					slug: data.slug,
 					title: trimmedTitle,
@@ -217,15 +272,18 @@ export function LandingHero() {
 	const handleCreateNewPool = () => {
 		if (typeof window !== "undefined") {
 			localStorage.removeItem(CREATED_AT_KEY);
+			localStorage.removeItem(CREATED_POOL_SLUG_KEY);
 			localStorage.removeItem(DEV_POOL_LINK_KEY);
 		}
 		setCreatedAt(null);
+		setCreatedPoolSlug(null);
 		setDevPoolLink(null);
 		setStep("hero");
 	};
 
-	const handleRemovePool = (slug: string, role: "admin" | "player") => {
-		removePoolFromHistory(slug, role);
+	const handleRemovePool = (slug: string) => {
+		removePoolFromHistory(slug, "admin");
+		removePoolFromHistory(slug, "player");
 		setPoolHistory(getPoolHistory());
 	};
 
@@ -246,7 +304,11 @@ export function LandingHero() {
 							pool.
 						</p>
 					</div>
-					<YourPools pools={poolHistory} onRemove={handleRemovePool} />
+					<YourPools
+						pools={poolHistory}
+						createdPoolSlug={createdPoolSlug}
+						onRemove={handleRemovePool}
+					/>
 					<FooterLinks />
 					{devPoolLink && (
 						<div className="rounded-lg mt-8 border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-left">
@@ -292,7 +354,11 @@ export function LandingHero() {
 							<PlusIcon className="w-4 h-4" /> Create another pool
 						</button>
 					)}
-					<YourPools pools={poolHistory} onRemove={handleRemovePool} />
+					<YourPools
+						pools={poolHistory}
+						createdPoolSlug={createdPoolSlug}
+						onRemove={handleRemovePool}
+					/>
 					<FooterLinks />
 					{devPoolLink && (
 						<div className="rounded-lg border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-left mt-8">
@@ -545,7 +611,11 @@ export function LandingHero() {
 				)}
 				{poolHistory.length > 0 && (
 					<div className="opacity-0 animate-fade-in-up animate-delay-3">
-						<YourPools pools={poolHistory} onRemove={handleRemovePool} />
+						<YourPools
+							pools={poolHistory}
+							createdPoolSlug={createdPoolSlug}
+							onRemove={handleRemovePool}
+						/>
 					</div>
 				)}
 				<div className="opacity-0 animate-fade-in-up animate-delay-4">

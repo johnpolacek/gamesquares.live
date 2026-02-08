@@ -16,6 +16,7 @@ test.describe("Landing", () => {
 		// Clear any prior pool creation so we see the hero CTA
 		await page.evaluate(() => {
 			localStorage.removeItem("gamesquares_pool_created_at");
+			localStorage.removeItem("gamesquares_created_pool_slug");
 			localStorage.removeItem("gamesquares_dev_pool_link");
 		});
 		await page.reload();
