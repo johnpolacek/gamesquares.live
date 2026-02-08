@@ -477,14 +477,14 @@ export default function PlayPage() {
 						</div>
 					</div>
 
-					<div className="pt-2">
+					<div className="-mt-2 text-muted-foreground/80 text-xs">
 						<p>
 							Not sure how Squares works?{" "}
 							<Link
 								href="/how-to-play"
 								target="_blank"
 								rel="noopener noreferrer"
-								className="text-xs text-muted-foreground/70 hover:text-muted-foreground underline transition-colors"
+								className="text-muted-foreground/80 hover:text-muted-foreground underline transition-colors"
 							>
 								Read this how-to-play guide
 							</Link>
