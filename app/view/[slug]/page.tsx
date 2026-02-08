@@ -3,6 +3,7 @@
 import { useQuery } from "convex/react";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { GraphicIcon } from "@/components/graphic-icon";
 import { SquaresGrid } from "@/components/squares-grid";
 import { api } from "@/convex/_generated/api";
@@ -583,14 +584,44 @@ export default function ViewPage() {
 						</div>
 					)}
 
-					{!numbersAssigned && hasGame && (
-						<div className="rounded-lg bg-yellow-500/10 p-4 ring-1 ring-yellow-500/30">
-							<p className="text-sm font-medium text-yellow-600">
-								Numbers have not been assigned yet. Waiting for admin.
-							</p>
+				{!numbersAssigned && hasGame && (
+					<div className="rounded-lg bg-yellow-500/10 p-4 ring-1 ring-yellow-500/30">
+						<p className="text-sm font-medium text-yellow-600">
+							Numbers have not been assigned yet. Waiting for admin.
+						</p>
+					</div>
+				)}
+
+				{/* QR Code - scan to join */}
+				{(() => {
+					const playUrl =
+						typeof window !== "undefined"
+							? `${window.location.origin}/play/${slug}`
+							: `/play/${slug}`;
+					return (
+						<div className="mt-auto pt-4">
+							<div className="flex items-center gap-4 rounded-lg bg-white p-4 ring-1 ring-border">
+								<div className="shrink-0 rounded-md bg-white p-1.5 ring-1 ring-border">
+									<QRCodeSVG
+										value={playUrl}
+										size={72}
+										level="M"
+										marginSize={0}
+									/>
+								</div>
+								<div className="flex-1 min-w-0">
+									<p className="text-sm font-bold text-foreground">
+										Scan to Join
+									</p>
+									<p className="text-xs text-muted-foreground mt-0.5 truncate">
+										{playUrl.replace(/^https?:\/\/(www\.)?/, "")}
+									</p>
+								</div>
+							</div>
 						</div>
-					)}
-				</div>
+					);
+				})()}
+			</div>
 			</div>
 		</div>
 	);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { GraphicIcon } from "@/components/graphic-icon";
 import { QrSignDialog } from "@/components/qr-sign-dialog";
 import { SquaresGrid, type WinningSquare } from "@/components/squares-grid";
@@ -377,6 +378,44 @@ export function AdminBoard({
 						</button>
 					</div>
 				</div>
+			</div>
+
+			{/* QR Code Sign card */}
+			<div className="mx-auto w-full max-w-lg px-4 pt-4">
+				<button
+					onClick={() => setShowQrDialog(true)}
+					className="w-full rounded-lg bg-card p-4 ring-1 ring-border flex items-center gap-4 text-left transition-all hover:ring-primary/40 hover:bg-card/80 active:scale-[0.99] cursor-pointer"
+					type="button"
+				>
+					{/* Mini QR icon */}
+					<div className="shrink-0 flex items-center justify-center rounded-md bg-white p-2 ring-1 ring-border">
+						<QRCodeSVG value={shareUrl} size={48} level="L" marginSize={0} />
+					</div>
+					<div className="flex-1 min-w-0">
+						<p className="text-sm font-bold text-foreground">
+							Print a Party Sign
+						</p>
+						<p className="text-xs text-muted-foreground mt-0.5">
+							Download or print a sign with a QR code so guests can scan to join your pool.
+						</p>
+					</div>
+					<svg
+						width="16"
+						height="16"
+						viewBox="0 0 16 16"
+						fill="none"
+						className="shrink-0 text-muted-foreground"
+						aria-hidden="true"
+					>
+						<path
+							d="M6 4l4 4-4 4"
+							stroke="currentColor"
+							strokeWidth="1.5"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+						/>
+					</svg>
+				</button>
 			</div>
 
 			{/* Max squares per person control */}
