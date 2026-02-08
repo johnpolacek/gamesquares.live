@@ -1,6 +1,7 @@
 "use node";
 
 import { v } from "convex/values";
+import type { Doc } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { action } from "./_generated/server";
 
@@ -182,6 +183,52 @@ function quartersEqual(
 	return true;
 }
 
+/** Return type for diagnoseEspnFeed (success or error). */
+type DiagnoseEspnFeedResult =
+	| {
+			ok: false;
+			error: string;
+			espnStatus: number;
+	  }
+	| {
+			ok: true;
+			espnStatus: number;
+			totalEvents: number;
+			superBowlFound: boolean;
+			eventName: string | null;
+			eventId: string | null;
+			gameState: "pre" | "in" | "post" | null;
+			period: number | null;
+			gameCompleted: boolean;
+			homeTeam: {
+				name: string;
+				abbreviation: string;
+				score: string;
+				id: string | null;
+			} | null;
+			awayTeam: {
+				name: string;
+				abbreviation: string;
+				score: string;
+				id: string | null;
+			} | null;
+			quarters: Quarter[];
+			gameComplete: boolean;
+			possession: "home" | "away" | "none";
+			downDistance: string | null;
+			isRedZone: boolean;
+			currentDbGame: {
+				name: string;
+				updatedAt: number;
+				quartersCount: number;
+				gameComplete: boolean;
+				possession: string;
+				downDistance: string | null;
+			} | null;
+			wouldUpdate: boolean;
+			wouldUpdateReason: string;
+	  };
+
 /**
  * Read-only diagnostic: fetch ESPN scoreboard and return all parsed data
  * WITHOUT writing anything to the database. Used by the admin status page
@@ -189,7 +236,7 @@ function quartersEqual(
  */
 export const diagnoseEspnFeed = action({
 	args: {},
-	handler: async (ctx) => {
+	handler: async (ctx): Promise<DiagnoseEspnFeedResult> => {
 		// 1. Fetch ESPN
 		let espnStatus: number;
 		let data: EspnScoreboard;
@@ -291,8 +338,18 @@ export const diagnoseEspnFeed = action({
 		const isRedZone = situation?.isRedZone ?? false;
 
 		// Compare with current DB state
-		const latestGame = await ctx.runQuery(internal.games.getLatestGame, {});
-		const currentDbGame = latestGame
+		const latestGame: Doc<"games"> | null = await ctx.runQuery(
+			internal.games.getLatestGame,
+			{},
+		);
+		const currentDbGame: {
+			name: string;
+			updatedAt: number;
+			quartersCount: number;
+			gameComplete: boolean;
+			possession: string;
+			downDistance: string | null;
+		} | null = latestGame
 			? {
 					name: latestGame.name,
 					updatedAt: latestGame.updatedAt,
