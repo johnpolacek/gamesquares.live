@@ -29,6 +29,7 @@ export type ConvexParticipant = {
 	_id: Id<"participants">;
 	poolId: Id<"pools">;
 	displayName: string;
+	graphic?: string;
 	createdAt: number;
 };
 
@@ -74,7 +75,7 @@ export function transformToPool(
 		const identity: PlayerIdentity = {
 			name: p.displayName,
 			initials: getInitials(p.displayName),
-			graphic: getGraphicForParticipant(idx),
+			graphic: p.graphic || getGraphicForParticipant(idx),
 		};
 		participantIdentities.set(p._id, identity);
 		players[p.displayName] = { identity, count: 0 };

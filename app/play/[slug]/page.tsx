@@ -3,7 +3,7 @@
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { GraphicIcon } from "@/components/graphic-icon";
 import { SquaresGrid } from "@/components/squares-grid";
 import { api } from "@/convex/_generated/api";
@@ -116,13 +116,17 @@ export default function PlayPage() {
 	const [iconSearch, setIconSearch] = useState("");
 	const [isJoining, setIsJoining] = useState(false);
 	const [isClaiming, setIsClaiming] = useState(false);
+	const [showEditIcon, setShowEditIcon] = useState(false);
+	const [editIconSearch, setEditIconSearch] = useState("");
 
 	const filteredIcons = searchPicker(iconSearch);
+	const editFilteredIcons = searchPicker(editIconSearch);
 
 	// Convex
 	const poolData = useQuery(api.pools.getPoolBySlug, { slug });
 	const gameData = useQuery(api.games.getCurrentGame, {});
 	const joinPoolMutation = useMutation(api.participants.joinPool);
+	const updateGraphicMutation = useMutation(api.participants.updateGraphic);
 	const claimSquaresMutation = useMutation(api.squares.claimSquares);
 	const releaseSquaresMutation = useMutation(api.squares.releaseSquares);
 
@@ -139,6 +143,48 @@ export default function PlayPage() {
 		}
 	}, [slug]);
 
+	// Handle icon change from edit picker
+	const handleChangeIcon = useCallback(
+		async (newGraphic: string) => {
+			if (!storedParticipant) return;
+
+			// Update localStorage
+			const updated: StoredParticipant = {
+				...storedParticipant,
+				graphic: newGraphic,
+			};
+			const key = `${PARTICIPANT_KEY_PREFIX}${slug}`;
+			localStorage.setItem(key, JSON.stringify(updated));
+			setStoredParticipant(updated);
+			setShowEditIcon(false);
+			setEditIconSearch("");
+
+			// Update server
+			try {
+				await updateGraphicMutation({
+					participantId: storedParticipant.participantId as Id<"participants">,
+					graphic: newGraphic,
+				});
+			} catch (err) {
+				console.error("Update icon error:", err);
+			}
+		},
+		[storedParticipant, slug, updateGraphicMutation],
+	);
+
+	// Sync localStorage graphic to server for existing participants (backfill)
+	const syncedRef = useRef(false);
+	useEffect(() => {
+		if (!storedParticipant?.graphic || syncedRef.current) return;
+		syncedRef.current = true;
+		updateGraphicMutation({
+			participantId: storedParticipant.participantId as Id<"participants">,
+			graphic: storedParticipant.graphic,
+		}).catch(() => {
+			// Non-critical; ignore errors
+		});
+	}, [storedParticipant, updateGraphicMutation]);
+
 	// Handle join
 	const handleJoin = useCallback(async () => {
 		if (!poolData?.found || isJoining) return;
@@ -151,6 +197,7 @@ export default function PlayPage() {
 			const result = await joinPoolMutation({
 				poolId: poolData.pool._id,
 				displayName: trimmed,
+				graphic: selectedGraphic,
 			});
 
 			const participant: StoredParticipant = {
@@ -711,16 +758,105 @@ export default function PlayPage() {
 						GameSquares.live
 					</span>
 				</div>
-				<div className="flex items-center gap-2">
-					<GraphicIcon
-						graphic={identity?.graphic ?? ""}
-						className="text-lg leading-none"
-						size={20}
-					/>
+				<div className="relative flex items-center gap-2">
+					<button
+						type="button"
+						onClick={() => setShowEditIcon((prev) => !prev)}
+						className="relative flex items-center gap-1 rounded-lg p-1 -m-1 transition-colors hover:bg-muted cursor-pointer"
+						title="Change icon"
+					>
+						<GraphicIcon
+							graphic={identity?.graphic ?? ""}
+							className="text-lg leading-none"
+							size={20}
+						/>
+						<svg
+							width="10"
+							height="10"
+							viewBox="0 0 16 16"
+							fill="none"
+							className="text-muted-foreground"
+							aria-hidden="true"
+						>
+							<path
+								d="M4 6l4 4 4-4"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							/>
+						</svg>
+					</button>
 					<span className="rounded bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">
 						<span className="sm:hidden">{identity?.initials}</span>
 						<span className="hidden sm:inline">{identity?.name}</span>
 					</span>
+
+					{/* Edit icon picker dropdown */}
+					{showEditIcon && (
+						<div className="absolute right-0 top-full mt-2 z-50 w-72 rounded-xl bg-card p-3 shadow-lg ring-1 ring-border animate-fade-in-up">
+							<div className="flex items-center justify-between mb-2">
+								<span className="text-xs font-bold text-foreground">
+									Change Icon
+								</span>
+								<button
+									type="button"
+									onClick={() => {
+										setShowEditIcon(false);
+										setEditIconSearch("");
+									}}
+									className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+									aria-label="Close"
+								>
+									<svg
+										width="12"
+										height="12"
+										viewBox="0 0 16 16"
+										fill="none"
+										aria-hidden="true"
+									>
+										<path
+											d="M4 4L12 12M12 4L4 12"
+											stroke="currentColor"
+											strokeWidth="1.5"
+											strokeLinecap="round"
+										/>
+									</svg>
+								</button>
+							</div>
+							<input
+								type="text"
+								value={editIconSearch}
+								onChange={(e) => setEditIconSearch(e.target.value)}
+								placeholder="Search icons..."
+								className="mb-2 w-full rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+							/>
+							<div className="grid grid-cols-8 gap-1 max-h-40 overflow-y-auto">
+								{editFilteredIcons.slice(0, 80).map((entry) => {
+									const isSelected =
+										entry.value === storedParticipant?.graphic;
+									return (
+										<button
+											key={entry.value}
+											type="button"
+											onClick={() => handleChangeIcon(entry.value)}
+											className={`flex items-center justify-center rounded-md p-1.5 text-base transition-all cursor-pointer ${
+												isSelected
+													? "bg-primary/20 ring-2 ring-primary"
+													: "hover:bg-muted"
+											}`}
+										>
+											<GraphicIcon
+												graphic={entry.value}
+												className="leading-none"
+												size={20}
+											/>
+										</button>
+									);
+								})}
+							</div>
+						</div>
+					)}
 				</div>
 			</header>
 

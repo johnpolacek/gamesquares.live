@@ -26,6 +26,7 @@ export default defineSchema({
 	participants: defineTable({
 		poolId: v.id("pools"),
 		displayName: v.string(),
+		graphic: v.optional(v.string()),
 		createdAt: v.number(),
 	}).index("by_pool", ["poolId"]),
 

@@ -9,6 +9,7 @@ export const joinPool = mutation({
 	args: {
 		poolId: v.id("pools"),
 		displayName: v.string(),
+		graphic: v.optional(v.string()),
 	},
 	returns: v.object({
 		participantId: v.id("participants"),
@@ -36,6 +37,10 @@ export const joinPool = mutation({
 			.first();
 
 		if (existing) {
+			// Backfill graphic if provided and missing or different
+			if (args.graphic && existing.graphic !== args.graphic) {
+				await ctx.db.patch(existing._id, { graphic: args.graphic });
+			}
 			return { participantId: existing._id, displayName: existing.displayName };
 		}
 
@@ -43,9 +48,32 @@ export const joinPool = mutation({
 		const participantId = await ctx.db.insert("participants", {
 			poolId: args.poolId,
 			displayName: trimmedName,
+			graphic: args.graphic,
 			createdAt: Date.now(),
 		});
 
 		return { participantId, displayName: trimmedName };
+	},
+});
+
+/**
+ * Update a participant's graphic/icon.
+ */
+export const updateGraphic = mutation({
+	args: {
+		participantId: v.id("participants"),
+		graphic: v.string(),
+	},
+	returns: v.object({ ok: v.boolean() }),
+	handler: async (ctx, args) => {
+		const participant = await ctx.db.get(args.participantId);
+		if (!participant) {
+			throw new ConvexError({
+				code: "NOT_FOUND",
+				message: "Participant not found",
+			});
+		}
+		await ctx.db.patch(args.participantId, { graphic: args.graphic });
+		return { ok: true };
 	},
 });
