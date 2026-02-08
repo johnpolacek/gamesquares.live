@@ -8,7 +8,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { api } from "@/convex/_generated/api";
 import {
-	getPoolHistory,
+	getVerifiedPoolHistory,
 	type PoolHistoryEntry,
 	removePoolFromHistory,
 } from "@/lib/pool-history";
@@ -213,7 +213,7 @@ export function LandingHero() {
 		}
 		const link = localStorage.getItem(DEV_POOL_LINK_KEY);
 		if (link) setDevPoolLink(link);
-		setPoolHistory(getPoolHistory());
+		setPoolHistory(getVerifiedPoolHistory());
 		if (process.env.NODE_ENV === "development") {
 			console.log("[LandingHero] localStorage on mount:", {
 				CREATED_AT_KEY: raw,
@@ -338,7 +338,7 @@ export function LandingHero() {
 	const handleRemovePool = (slug: string) => {
 		removePoolFromHistory(slug, "admin");
 		removePoolFromHistory(slug, "player");
-		setPoolHistory(getPoolHistory());
+		setPoolHistory(getVerifiedPoolHistory());
 	};
 
 	const handleSponsor = useCallback(async () => {
@@ -392,28 +392,27 @@ export function LandingHero() {
 							access and start managing your pool.
 						</p>
 					</div>
-					<YourPools pools={poolHistory} onRemove={handleRemovePool} />
-					<FooterLinks />
-					{devPoolLink && (
-						<div className="rounded-lg mt-8 border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-left">
-							<p className="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
-								Dev bypass
-							</p>
-							<p className="mt-1 text-sm text-muted-foreground">
-								Admin link is in the server terminal. Open pool:
-							</p>
-							<a
-								href={devPoolLink}
-								className="mt-2 block truncate text-sm font-medium text-primary underline"
-							>
-								{devPoolLink}
-							</a>
-						</div>
-					)}
-				</div>
-			</main>
-		);
-	}
+				<FooterLinks />
+				{devPoolLink && (
+					<div className="rounded-lg mt-8 border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-left">
+						<p className="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+							Dev bypass
+						</p>
+						<p className="mt-1 text-sm text-muted-foreground">
+							Admin link is in the server terminal. Open pool:
+						</p>
+						<a
+							href={devPoolLink}
+							className="mt-2 block truncate text-sm font-medium text-primary underline"
+						>
+							{devPoolLink}
+						</a>
+					</div>
+				)}
+			</div>
+		</main>
+	);
+}
 
 	// Returning user: they already created a pool within 15 min (no button) or after (show create new)
 	if (createdAt !== null && step === "hero") {

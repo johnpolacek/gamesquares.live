@@ -6,6 +6,8 @@ export type PoolHistoryEntry = {
 	title: string;
 	role: "admin" | "player";
 	joinedAt: number;
+	/** Set when admin role was verified via email magic link */
+	verifiedAt?: number;
 };
 
 /**
@@ -33,6 +35,18 @@ export function getPoolHistory(): PoolHistoryEntry[] {
 	} catch {
 		return [];
 	}
+}
+
+/**
+ * Get only verified pool entries: players (always trusted) and
+ * admin entries that have been confirmed via email verification.
+ * Admin entries without verifiedAt are stale (created before the
+ * email-verification flow) and are excluded.
+ */
+export function getVerifiedPoolHistory(): PoolHistoryEntry[] {
+	return getPoolHistory().filter(
+		(e) => e.role === "player" || (e.role === "admin" && e.verifiedAt),
+	);
 }
 
 /**

@@ -31,11 +31,13 @@ function GoPageContent() {
 				if (result.success) {
 					// Upgrade pool history entry to admin role now that email is verified
 					if (result.slug) {
+						const now = Date.now();
 						addPoolToHistory({
 							slug: result.slug,
 							title: result.title || result.slug,
 							role: "admin",
-							joinedAt: Date.now(),
+							joinedAt: now,
+							verifiedAt: now,
 						});
 					}
 					// Redirect to admin page (cookie is already set by API)
