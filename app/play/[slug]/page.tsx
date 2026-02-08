@@ -17,6 +17,84 @@ import {
 import { addPoolToHistory } from "@/lib/pool-history";
 import type { PlayerIdentity } from "@/lib/types";
 
+/**
+ * Given a score digit pair and the pool's number assignments,
+ * return the player name who owns that square (or null).
+ */
+function findSquareOwner(
+	rowDigit: number,
+	colDigit: number,
+	pool: {
+		rowNumbers: (number | null)[];
+		colNumbers: (number | null)[];
+		squares: { claimedBy: { name: string } | null }[][];
+	},
+): string | null {
+	const rowIdx = pool.rowNumbers.indexOf(rowDigit);
+	const colIdx = pool.colNumbers.indexOf(colDigit);
+	if (rowIdx >= 0 && colIdx >= 0) {
+		return pool.squares[rowIdx]?.[colIdx]?.claimedBy?.name ?? null;
+	}
+	return null;
+}
+
+type WhatIfScenario = {
+	label: string;
+	teamSide: "row" | "col";
+	points: number;
+	newRowScore: number;
+	newColScore: number;
+	rowDigit: number;
+	colDigit: number;
+	playerName: string | null;
+};
+
+function computeWhatIfs(
+	currentRowScore: number,
+	currentColScore: number,
+	pool: {
+		rowNumbers: (number | null)[];
+		colNumbers: (number | null)[];
+		squares: { claimedBy: { name: string } | null }[][];
+	},
+	possession: "home" | "away" | "none",
+): WhatIfScenario[] {
+	const homeScenarios: {
+		label: string;
+		teamSide: "row" | "col";
+		points: number;
+	}[] = [
+		{ label: "Patriots FG", teamSide: "row", points: 3 },
+		{ label: "Patriots TD", teamSide: "row", points: 7 },
+	];
+
+	const awayScenarios: {
+		label: string;
+		teamSide: "row" | "col";
+		points: number;
+	}[] = [
+		{ label: "Seahawks FG", teamSide: "col", points: 3 },
+		{ label: "Seahawks TD", teamSide: "col", points: 7 },
+	];
+
+	// Order: possessing team first
+	const scenarios =
+		possession === "away"
+			? [...awayScenarios, ...homeScenarios]
+			: [...homeScenarios, ...awayScenarios];
+
+	return scenarios.map((s) => {
+		const newRowScore =
+			s.teamSide === "row" ? currentRowScore + s.points : currentRowScore;
+		const newColScore =
+			s.teamSide === "col" ? currentColScore + s.points : currentColScore;
+		const rowDigit = newRowScore % 10;
+		const colDigit = newColScore % 10;
+		const playerName = findSquareOwner(rowDigit, colDigit, pool);
+		return { ...s, newRowScore, newColScore, rowDigit, colDigit, playerName };
+	});
+}
+
 const PARTICIPANT_KEY_PREFIX = "gamesquares_participant_";
 
 type StoredParticipant = {
@@ -294,6 +372,20 @@ export default function PlayPage() {
 					};
 				})
 			: null;
+
+	// What-if scenarios for play view (show when game is active)
+	const hasGame = gameData?.found === true;
+	const possession = (hasGame ? gameData.game.possession : "none") as "home" | "away" | "none";
+	const latestQuarter =
+		hasGame && gameData.game.quarters.length > 0
+			? gameData.game.quarters[gameData.game.quarters.length - 1]
+			: null;
+	const currentRowScore = latestQuarter?.rowTeamScore ?? 0;
+	const currentColScore = latestQuarter?.colTeamScore ?? 0;
+	const gameIsActive = hasGame && numbersAssigned && !isGameComplete;
+	const whatIfs = gameIsActive
+		? computeWhatIfs(currentRowScore, currentColScore, pool, possession)
+		: [];
 
 	// Join form (not joined yet)
 	if (!storedParticipant) {
@@ -678,34 +770,91 @@ export default function PlayPage() {
 				/>
 			</div>
 
-			<div className="flex justify-center px-4 pt-4 pb-8">
-				<div className="flex w-full max-w-xs gap-3">
-					<div className="flex flex-1 flex-col items-center rounded-lg bg-card p-3 ring-1 ring-border">
-						<span className="font-mono text-lg font-bold text-foreground">
-							{currentCount}
-						</span>
-						<span className="text-[10px] font-medium text-muted-foreground">
-							your picks
-						</span>
-					</div>
-					<div className="flex flex-1 flex-col items-center rounded-lg bg-card p-3 ring-1 ring-border">
-						<span className="font-mono text-lg font-bold text-foreground">
-							{remaining}
-						</span>
-						<span className="text-[10px] font-medium text-muted-foreground">
-							remaining
-						</span>
-					</div>
-					<div className="flex flex-1 flex-col items-center rounded-lg bg-card p-3 ring-1 ring-border">
-						<span className="font-mono text-lg font-bold text-foreground">
-							{100 - pool.squares.flat().filter((s) => s.claimedBy).length}
-						</span>
-						<span className="text-[10px] font-medium text-muted-foreground">
-							open
-						</span>
+			{whatIfs.length > 0 ? (
+				<div className="px-4 pt-4 pb-8">
+					<h3 className="mb-2 text-center text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+						Next Score Wins
+					</h3>
+					<div className="grid grid-cols-2 gap-2 max-w-sm mx-auto">
+						{whatIfs.map((s) => {
+							const isTeamWithBall =
+								(s.teamSide === "row" && possession === "home") ||
+								(s.teamSide === "col" && possession === "away");
+							return (
+								<div
+									key={s.label}
+									className={`rounded-lg p-2.5 ${
+										s.teamSide === "row"
+											? isTeamWithBall
+												? "bg-blue-500/12 ring-2 ring-blue-500/40"
+												: "bg-blue-500/8 ring-1 ring-blue-500/20"
+											: isTeamWithBall
+												? "bg-emerald-500/12 ring-2 ring-emerald-500/40"
+												: "bg-emerald-500/8 ring-1 ring-emerald-500/20"
+									}`}
+								>
+									<div className="flex items-center gap-1">
+										<span className="text-sm">🏈</span>
+										<span
+											className={`text-[10px] font-bold uppercase tracking-wider ${
+												s.teamSide === "row"
+													? "text-blue-600"
+													: "text-emerald-600"
+											}`}
+										>
+											{s.label}
+										</span>
+										{isTeamWithBall && (
+											<span className="ml-auto text-[8px] font-bold uppercase tracking-wider text-amber-600 bg-amber-500/10 rounded-full px-1 py-0.5">
+												Ball
+											</span>
+										)}
+									</div>
+									<div className="mt-0.5 text-xs font-semibold text-muted-foreground tabular-nums">
+										{s.newRowScore} - {s.newColScore}
+									</div>
+									<div className="mt-1 text-sm font-bold text-foreground truncate">
+										{s.playerName ?? (
+											<span className="text-muted-foreground/40 font-normal italic text-xs">
+												Unclaimed
+											</span>
+										)}
+									</div>
+								</div>
+							);
+						})}
 					</div>
 				</div>
-			</div>
+			) : (
+				<div className="flex justify-center px-4 pt-4 pb-8">
+					<div className="flex w-full max-w-xs gap-3">
+						<div className="flex flex-1 flex-col items-center rounded-lg bg-card p-3 ring-1 ring-border">
+							<span className="font-mono text-lg font-bold text-foreground">
+								{currentCount}
+							</span>
+							<span className="text-[10px] font-medium text-muted-foreground">
+								your picks
+							</span>
+						</div>
+						<div className="flex flex-1 flex-col items-center rounded-lg bg-card p-3 ring-1 ring-border">
+							<span className="font-mono text-lg font-bold text-foreground">
+								{remaining}
+							</span>
+							<span className="text-[10px] font-medium text-muted-foreground">
+								remaining
+							</span>
+						</div>
+						<div className="flex flex-1 flex-col items-center rounded-lg bg-card p-3 ring-1 ring-border">
+							<span className="font-mono text-lg font-bold text-foreground">
+								{100 - pool.squares.flat().filter((s) => s.claimedBy).length}
+							</span>
+							<span className="text-[10px] font-medium text-muted-foreground">
+								open
+							</span>
+						</div>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }
