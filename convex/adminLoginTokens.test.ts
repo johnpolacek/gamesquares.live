@@ -19,7 +19,7 @@ describe("adminLoginTokens", () => {
 		expect(result.expiresAt).toBeGreaterThan(Date.now());
 	});
 
-	it("validateAndConsumeToken succeeds and returns slug and poolId", async () => {
+	it("validateToken succeeds and returns slug and poolId", async () => {
 		const t = convexTest(schema, modules);
 		const { poolId, slug } = await t.mutation(api.pools.createPool, {
 			title: "Pool",
@@ -31,7 +31,7 @@ describe("adminLoginTokens", () => {
 			tokenHash: "valid-token",
 		});
 		const result = await t.mutation(
-			api.adminLoginTokens.validateAndConsumeToken,
+			api.adminLoginTokens.validateToken,
 			{ tokenHash: "valid-token" },
 		);
 		expect(result.success).toBe(true);
@@ -41,31 +41,36 @@ describe("adminLoginTokens", () => {
 		}
 	});
 
-	it("validateAndConsumeToken returns error when link already used", async () => {
+	it("validateToken allows reuse of the same token", async () => {
 		const t = convexTest(schema, modules);
-		const { poolId } = await t.mutation(api.pools.createPool, {
+		const { poolId, slug } = await t.mutation(api.pools.createPool, {
 			title: "Pool",
 			adminEmail: "a@b.com",
 			maxSquaresPerPerson: 5,
 		});
 		await t.mutation(api.adminLoginTokens.createAdminLoginToken, {
 			poolId,
-			tokenHash: "one-time",
+			tokenHash: "reuse-token",
 		});
-		await t.mutation(api.adminLoginTokens.validateAndConsumeToken, {
-			tokenHash: "one-time",
-		});
-		const result = await t.mutation(
-			api.adminLoginTokens.validateAndConsumeToken,
-			{ tokenHash: "one-time" },
+		// First use
+		const first = await t.mutation(
+			api.adminLoginTokens.validateToken,
+			{ tokenHash: "reuse-token" },
 		);
-		expect(result.success).toBe(false);
-		if (!result.success) {
-			expect(result.error).toMatch(/already been used|used/);
+		expect(first.success).toBe(true);
+		// Second use — should still succeed
+		const second = await t.mutation(
+			api.adminLoginTokens.validateToken,
+			{ tokenHash: "reuse-token" },
+		);
+		expect(second.success).toBe(true);
+		if (second.success) {
+			expect(second.slug).toBe(slug);
+			expect(second.poolId).toBe(poolId);
 		}
 	});
 
-	it("validateAndConsumeToken returns error when token expired", async () => {
+	it("validateToken returns error when token expired", async () => {
 		const t = convexTest(schema, modules);
 		const { poolId } = await t.mutation(api.pools.createPool, {
 			title: "Pool",
@@ -87,7 +92,7 @@ describe("adminLoginTokens", () => {
 			}
 		});
 		const result = await t.mutation(
-			api.adminLoginTokens.validateAndConsumeToken,
+			api.adminLoginTokens.validateToken,
 			{ tokenHash: "expired-token" },
 		);
 		expect(result.success).toBe(false);

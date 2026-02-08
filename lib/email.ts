@@ -26,7 +26,7 @@ export async function sendAdminLoginEmail({
 		const text = [
 			"Your pool is ready!",
 			"",
-			"Admin link (use this to manage your pool; expires in 15 minutes):",
+			"Admin link (use this to manage your pool):",
 			adminLoginLink,
 			"",
 			"Share this link with players to join:",
@@ -46,7 +46,7 @@ export async function sendAdminLoginEmail({
 	const text = [
 		"Your pool is ready!",
 		"",
-		"Admin link (use this to manage your pool; expires in 15 minutes):",
+		"Admin link (use this to manage your pool):",
 		adminLoginLink,
 		"",
 		"Share this link with players to join:",

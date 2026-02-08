@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 		const tokenHash = createHash("sha256").update(token).digest("hex");
 
 		// Validate with Convex
-		const result = await fetchMutation(api.adminLoginTokens.validateAndConsumeToken, {
+		const result = await fetchMutation(api.adminLoginTokens.validateToken, {
 			tokenHash,
 		});
 

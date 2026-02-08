@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
 
-const TTL_MS = 15 * 60 * 1000; // 15 minutes
+const TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export const createAdminLoginToken = mutation({
 	args: {
@@ -23,10 +23,10 @@ export const createAdminLoginToken = mutation({
 });
 
 /**
- * Validate and consume a one-time admin login token.
+ * Validate an admin login token (reusable within TTL).
  * Returns the pool slug for redirect if valid.
  */
-export const validateAndConsumeToken = mutation({
+export const validateToken = mutation({
 	args: {
 		tokenHash: v.string(),
 	},
@@ -44,16 +44,9 @@ export const validateAndConsumeToken = mutation({
 			return { success: false as const, error: "Invalid or expired link" };
 		}
 
-		if (token.usedAt) {
-			return { success: false as const, error: "This link has already been used" };
-		}
-
 		if (Date.now() > token.expiresAt) {
 			return { success: false as const, error: "This link has expired" };
 		}
-
-		// Mark token as used
-		await ctx.db.patch(token._id, { usedAt: Date.now() });
 
 		// Get pool for redirect
 		const pool = await ctx.db.get(token.poolId);
