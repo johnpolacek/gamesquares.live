@@ -3,14 +3,14 @@
 import { useQuery } from "convex/react";
 import { PlusIcon, XIcon } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { api } from "@/convex/_generated/api";
 import {
-	type PoolHistoryEntry,
 	addPoolToHistory,
 	getPoolHistory,
+	type PoolHistoryEntry,
 	removePoolFromHistory,
 } from "@/lib/pool-history";
 
@@ -42,8 +42,7 @@ function mergePoolsBySlug(
 	const bySlug = new Map<string, MergedPool>();
 	for (const entry of pools) {
 		const existing = bySlug.get(entry.slug);
-		const isAdmin =
-			entry.role === "admin" || entry.slug === createdPoolSlug;
+		const isAdmin = entry.role === "admin" || entry.slug === createdPoolSlug;
 		if (!existing) {
 			bySlug.set(entry.slug, {
 				slug: entry.slug,
@@ -85,15 +84,30 @@ function YourPools({
 		hasCreatedPoolNoSlug ?? false,
 	);
 	if (merged.length === 0) return null;
-	if (process.env.NODE_ENV === "development" && typeof window !== "undefined" && (window.location?.search?.includes("debug=pools") || localStorage.getItem("gamesquares_debug_pools") === "1")) {
+	if (
+		process.env.NODE_ENV === "development" &&
+		typeof window !== "undefined" &&
+		(window.location?.search?.includes("debug=pools") ||
+			localStorage.getItem("gamesquares_debug_pools") === "1")
+	) {
 		console.log("[YourPools] debug", {
 			createdPoolSlug: createdPoolSlug ?? null,
 			hasCreatedPoolNoSlug: hasCreatedPoolNoSlug ?? false,
 			poolHistory: pools,
-			merged: merged.map((p) => ({ slug: p.slug, title: p.title, isAdmin: p.isAdmin })),
+			merged: merged.map((p) => ({
+				slug: p.slug,
+				title: p.title,
+				isAdmin: p.isAdmin,
+			})),
 			localStorage: {
-				createdAt: typeof localStorage !== "undefined" ? localStorage.getItem(CREATED_AT_KEY) : null,
-				createdPoolSlug: typeof localStorage !== "undefined" ? localStorage.getItem(CREATED_POOL_SLUG_KEY) : null,
+				createdAt:
+					typeof localStorage !== "undefined"
+						? localStorage.getItem(CREATED_AT_KEY)
+						: null,
+				createdPoolSlug:
+					typeof localStorage !== "undefined"
+						? localStorage.getItem(CREATED_POOL_SLUG_KEY)
+						: null,
 			},
 		});
 	}
@@ -102,7 +116,7 @@ function YourPools({
 			<h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
 				Your Pools
 			</h3>
-			<div className="flex flex-col gap-3">
+			<div className="flex flex-col gap-3 min-w-sm">
 				{merged.map((pool) => (
 					<div
 						key={pool.slug}
@@ -175,10 +189,24 @@ function FooterLinks() {
 			</div>
 			<p className="text-[10px] text-muted-foreground/60 text-center max-w-xs">
 				Protected by reCAPTCHA.{" "}
-				<a href="https://policies.google.com/privacy" className="underline" target="_blank" rel="noopener noreferrer">Privacy</a>
+				<a
+					href="https://policies.google.com/privacy"
+					className="underline"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					Privacy
+				</a>
 				{" & "}
-				<a href="https://policies.google.com/terms" className="underline" target="_blank" rel="noopener noreferrer">Terms</a>
-				{" "}apply.
+				<a
+					href="https://policies.google.com/terms"
+					className="underline"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					Terms
+				</a>{" "}
+				apply.
 			</p>
 		</footer>
 	);
@@ -200,7 +228,9 @@ export function LandingHero() {
 	const [showSponsor, setShowSponsor] = useState(false);
 	const [sponsorLoading, setSponsorLoading] = useState(false);
 	const searchParams = useSearchParams();
-	const [sponsorConfig, setSponsorConfig] = useState<SponsorConfig | null>(null);
+	const [sponsorConfig, setSponsorConfig] = useState<SponsorConfig | null>(
+		null,
+	);
 
 	const totalPlayers = 100 / squaresPerPerson;
 	const [, setTick] = useState(0);
@@ -613,7 +643,10 @@ export function LandingHero() {
 					)}
 
 					{error && (
-						<p className="text-sm text-destructive animate-fade-in-up" role="alert">
+						<p
+							className="text-sm text-destructive animate-fade-in-up"
+							role="alert"
+						>
 							{error}
 						</p>
 					)}
@@ -741,10 +774,12 @@ export function LandingHero() {
 				</p>
 				{poolCount !== undefined && poolCount > 0 && (
 					<p className="text-sm text-muted-foreground opacity-0 animate-fade-in-up animate-delay-3">
-						<span key={poolCount} className="font-mono font-bold tabular-nums text-foreground animate-score-pop">
+						<span
+							key={poolCount}
+							className="font-mono font-bold tabular-nums text-foreground animate-score-pop"
+						>
 							{poolCount.toLocaleString()}
-						</span>
-						{" "}
+						</span>{" "}
 						{poolCount === 1 ? "pool" : "pools"} created
 					</p>
 				)}
