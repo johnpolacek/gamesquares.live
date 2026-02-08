@@ -108,6 +108,7 @@ You only need the **play link** from the pool runner (e.g. `https://yoursite.com
 - **Stack:** Next.js (App Router), Convex (backend + realtime), Tailwind.
 - **Convex:** Pools, participants, squares, admin tokens, and the global **games** table (one current game with quarter scores). ESPN cron for automatic score updates every minute.
 - **Env:** See `.env.example`. `GLOBAL_ADMIN_SECRET` must be set in both Vercel env vars and the Convex dashboard (same value).
+- **Stripe sponsoring:** When the pool-creation limit (100) is hit, users can sponsor the next batch of pools via Stripe. Set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `STRIPE_SPONSOR_PRICE_ID` in Vercel/`.env.local`. Also set `SPONSOR_WEBHOOK_SECRET` in the **Convex dashboard** (same value shared between Next.js and Convex). Register the webhook URL in Stripe as `https://yoursite.com/api/sponsor/webhook` (event: `checkout.session.completed`).
 - **Secrets:** Do not commit `.env.local` or any real API keys or passcodes; they are gitignored.
 - **E2E:** `pnpm test:e2e` runs the full suite; the app starts via Playwright and waits for Convex (`/api/ready`) before tests run.
 

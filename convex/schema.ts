@@ -45,6 +45,12 @@ export default defineSchema({
 		bonusExpiresAt: v.number(),
 	}),
 
+	sponsorPayments: defineTable({
+		idempotencyKey: v.string(),
+		amount: v.number(),
+		createdAt: v.number(),
+	}).index("by_idempotencyKey", ["idempotencyKey"]),
+
 	// One global game: quarter scores for Super Bowl squares (row/col = last digit per quarter)
 	games: defineTable({
 		name: v.string(),

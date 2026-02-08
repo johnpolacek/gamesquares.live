@@ -289,6 +289,34 @@ export const assignNumbers = mutation({
 });
 
 /**
+ * Add sponsored capacity to the global pool limit.
+ * Internal-only — called by the sponsor fulfillment action after a successful Stripe payment.
+ */
+export const addSponsorCapacity = internalMutation({
+	args: { amount: v.number() },
+	returns: v.null(),
+	handler: async (ctx, args) => {
+		if (args.amount <= 0) return null;
+		let limits = await ctx.db.query("globalLimits").first();
+		if (!limits) {
+			const now = Date.now();
+			await ctx.db.insert("globalLimits", {
+				windowStart: now,
+				createdCount: 0,
+				bonusCapacity: 0,
+				bonusExpiresAt: 0,
+			});
+			limits = await ctx.db.query("globalLimits").first();
+			if (!limits) return null;
+		}
+		await ctx.db.patch(limits._id, {
+			bonusCapacity: limits.bonusCapacity + args.amount,
+		});
+		return null;
+	},
+});
+
+/**
  * Reset global rate-limit counter. Internal-only (not callable from clients).
  * Useful for testing or manual maintenance.
  */

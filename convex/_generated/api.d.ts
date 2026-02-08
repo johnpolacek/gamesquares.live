@@ -14,6 +14,7 @@ import type * as games from "../games.js";
 import type * as nflScores from "../nflScores.js";
 import type * as participants from "../participants.js";
 import type * as pools from "../pools.js";
+import type * as sponsor from "../sponsor.js";
 import type * as squares from "../squares.js";
 
 import type {
@@ -29,6 +30,7 @@ declare const fullApi: ApiFromModules<{
   nflScores: typeof nflScores;
   participants: typeof participants;
   pools: typeof pools;
+  sponsor: typeof sponsor;
   squares: typeof squares;
 }>;
 

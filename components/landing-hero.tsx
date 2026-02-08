@@ -4,6 +4,7 @@ import { useQuery } from "convex/react";
 import { PlusIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { api } from "@/convex/_generated/api";
 import {
@@ -12,6 +13,11 @@ import {
 	getPoolHistory,
 	removePoolFromHistory,
 } from "@/lib/pool-history";
+
+type SponsorConfig = {
+	poolsCount: number;
+	displayPrice: string;
+};
 
 const squareOptions = [1, 2, 4, 5, 10];
 const CREATED_AT_KEY = "gamesquares_pool_created_at";
@@ -184,6 +190,10 @@ export function LandingHero() {
 	const [squaresPerPerson, setSquaresPerPerson] = useState(5);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [showSponsor, setShowSponsor] = useState(false);
+	const [sponsorLoading, setSponsorLoading] = useState(false);
+	const searchParams = useSearchParams();
+	const [sponsorConfig, setSponsorConfig] = useState<SponsorConfig | null>(null);
 
 	const totalPlayers = 100 / squaresPerPerson;
 	const [, setTick] = useState(0);
@@ -220,6 +230,34 @@ export function LandingHero() {
 		return () => clearTimeout(t);
 	}, [createdAt]);
 
+	useEffect(() => {
+		let cancelled = false;
+		(async () => {
+			try {
+				const res = await fetch("/api/sponsor/config");
+				const data = await res.json();
+				if (!res.ok) return;
+				if (
+					typeof data?.poolsCount === "number" &&
+					Number.isFinite(data.poolsCount) &&
+					typeof data?.displayPrice === "string"
+				) {
+					if (!cancelled) {
+						setSponsorConfig({
+							poolsCount: data.poolsCount,
+							displayPrice: data.displayPrice,
+						});
+					}
+				}
+			} catch {
+				// ignore: sponsor config is optional until rate-limit is hit
+			}
+		})();
+		return () => {
+			cancelled = true;
+		};
+	}, []);
+
 	const handleCreatePool = useCallback(async () => {
 		const trimmedTitle = title.trim();
 		const trimmedEmail = adminEmail.trim();
@@ -228,6 +266,7 @@ export function LandingHero() {
 			return;
 		}
 		setError(null);
+		setShowSponsor(false);
 		setLoading(true);
 		try {
 			// Get reCAPTCHA token (if available; gracefully skip on failure)
@@ -260,6 +299,9 @@ export function LandingHero() {
 			}
 			if (!res.ok) {
 				setError(data.error ?? "Failed to create pool");
+				if (res.status === 429) {
+					setShowSponsor(true);
+				}
 				return;
 			}
 			const now = Date.now();
@@ -312,6 +354,40 @@ export function LandingHero() {
 		removePoolFromHistory(slug, "player");
 		setPoolHistory(getPoolHistory());
 	};
+
+	const handleSponsor = useCallback(async () => {
+		setSponsorLoading(true);
+		try {
+			const res = await fetch("/api/sponsor/checkout", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({}),
+			});
+			const data = await res.json();
+			if (!res.ok || !data.url) {
+				setError(data.error ?? "Unable to start checkout. Try again.");
+				return;
+			}
+			window.location.href = data.url;
+		} catch {
+			setError("Something went wrong starting checkout.");
+		} finally {
+			setSponsorLoading(false);
+		}
+	}, []);
+
+	// Detect returning from a sponsor checkout
+	const sponsorStatus = searchParams.get("sponsor");
+	const [sponsorMessage, setSponsorMessage] = useState<string | null>(null);
+	useEffect(() => {
+		if (sponsorStatus === "success") {
+			setSponsorMessage("Thanks for sponsoring! You can create your pool now.");
+			// Clean up the URL param
+			const url = new URL(window.location.href);
+			url.searchParams.delete("sponsor");
+			window.history.replaceState({}, "", url.toString());
+		}
+	}, [sponsorStatus]);
 
 	// Success: show pool link only if API returned it (e.g. in development)
 	if (step === "success") {
@@ -523,10 +599,38 @@ export function LandingHero() {
 						</div>
 					</div>
 
+					{sponsorMessage && (
+						<output className="block rounded-lg border border-green-500/50 bg-green-500/10 px-4 py-3 text-sm text-green-700 dark:text-green-400 animate-fade-in-up">
+							{sponsorMessage}
+						</output>
+					)}
+
 					{error && (
 						<p className="text-sm text-destructive animate-fade-in-up" role="alert">
 							{error}
 						</p>
+					)}
+
+					{showSponsor && (
+						<div className="flex flex-col gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4 animate-fade-in-up">
+							<p className="text-sm text-foreground">
+								Pool creation limit reached. You can sponsor the next{" "}
+								<strong>{sponsorConfig?.poolsCount ?? 100} pools</strong> for{" "}
+								<strong>{sponsorConfig?.displayPrice ?? "$10"}</strong> and then
+								create yours.
+							</p>
+							<button
+								data-testid="sponsor-cta"
+								onClick={handleSponsor}
+								disabled={sponsorLoading}
+								className="w-full rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-all active:scale-[0.98] disabled:opacity-60"
+								type="button"
+							>
+								{sponsorLoading
+									? "Redirecting…"
+									: `Sponsor ${sponsorConfig?.poolsCount ?? 100} pools — ${sponsorConfig?.displayPrice ?? "$10"}`}
+							</button>
+						</div>
 					)}
 
 					<button
