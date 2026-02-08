@@ -138,7 +138,6 @@ export default function AdminPage() {
 	// Scores form state
 	const [name, setName] = useState("Global Game");
 	const [quarters, setQuarters] = useState<QuarterState>(defaultQuarters);
-	const [gameComplete, setGameComplete] = useState(false);
 	const [scoresStatus, setScoresStatus] = useState<
 		"idle" | "loading" | "success" | "error"
 	>("idle");
@@ -165,7 +164,6 @@ export default function AdminPage() {
 		if (gameData.found) {
 			const g = gameData.game;
 			setName(g.name);
-			setGameComplete(g.gameComplete ?? false);
 			const q: QuarterState = defaultQuarters();
 			for (const gq of g.quarters) {
 				if (gq.label in q) {
@@ -220,7 +218,6 @@ export default function AdminPage() {
 		if (!gameData?.found) return true;
 		const g = gameData.game;
 		if (name.trim() !== g.name) return true;
-		if (gameComplete !== (g.gameComplete ?? false)) return true;
 		for (const q of QUARTERS) {
 			const live = g.quarters.find((gq) => gq.label === q);
 			const form = quarters[q];
@@ -244,7 +241,12 @@ export default function AdminPage() {
 				label,
 				rowTeamScore: Number(quarters[label]?.rowTeamScore ?? 0),
 				colTeamScore: Number(quarters[label]?.colTeamScore ?? 0),
-				complete: quarters[label]?.complete ?? false,
+				// Q4 (Final) is auto-complete when it has scores
+				complete:
+					label === "Q4"
+						? (Number(quarters[label]?.rowTeamScore ?? 0) !== 0 ||
+							Number(quarters[label]?.colTeamScore ?? 0) !== 0)
+						: (quarters[label]?.complete ?? false),
 			}));
 			const filteredQuarters = allQuarters.filter((_, i, arr) => {
 				for (let j = arr.length - 1; j >= 0; j--) {
@@ -259,6 +261,12 @@ export default function AdminPage() {
 				return i === 0;
 			});
 
+			// Game is complete when Final (Q4) has scores
+			const q4 = quarters.Q4;
+			const derivedGameComplete =
+				(Number(q4?.rowTeamScore ?? 0) !== 0 ||
+					Number(q4?.colTeamScore ?? 0) !== 0);
+
 			const res = await fetch("/api/admin/scores", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -266,7 +274,7 @@ export default function AdminPage() {
 					secret,
 					name: name.trim() || "Global Game",
 					quarters: filteredQuarters,
-					gameComplete,
+					gameComplete: derivedGameComplete,
 				}),
 			});
 			const data = await res.json();
@@ -300,7 +308,6 @@ export default function AdminPage() {
 
 	function handleReset() {
 		setQuarters(defaultQuarters());
-		setGameComplete(false);
 		setName("Test Run");
 		setScoresStatus("idle");
 		setScoresMessage("");
@@ -528,32 +535,28 @@ export default function AdminPage() {
 							<div className="grid gap-4 rounded-md border border-border p-4">
 								{/* Column headers */}
 								<div className="flex items-center gap-3">
-									<span className="w-8" />
-									<div className="flex gap-2">
-										<div className="w-full text-center">
-											<span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
-												{diagResult?.homeTeam
-													? `${diagResult.homeTeam.abbreviation} (Row)`
-													: "Row (home)"}
-											</span>
-										</div>
-										<div className="w-full text-center">
-											<span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600">
-												{diagResult?.awayTeam
-													? `${diagResult.awayTeam.abbreviation} (Col)`
-													: "Col (away)"}
-											</span>
-										</div>
+									<span className="w-8 shrink-0" />
+									<div className="flex flex-1 gap-2">
+										<span className="flex-1 text-center text-[11px] font-bold uppercase tracking-wider text-blue-600 whitespace-nowrap">
+											{diagResult?.homeTeam
+												? `${diagResult.homeTeam.abbreviation} (Row)`
+												: "Row (home)"}
+										</span>
+										<span className="flex-1 text-center text-[11px] font-bold uppercase tracking-wider text-emerald-600 whitespace-nowrap">
+											{diagResult?.awayTeam
+												? `${diagResult.awayTeam.abbreviation} (Col)`
+												: "Col (away)"}
+										</span>
 									</div>
-									<span className="w-[60px]" />
+									<span className="w-[60px] shrink-0" />
 								</div>
 								{QUARTERS.map((q) => (
 									<div key={q} className="flex items-center gap-3">
-										<span className="w-8 text-sm text-muted-foreground">
-											{q}
+										<span className={`w-8 shrink-0 text-sm ${q === "Q4" ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
+											{q === "Q4" ? "Final" : q}
 										</span>
-										<div className="flex gap-2">
-											<div>
+										<div className="flex flex-1 gap-2">
+											<div className="flex-1">
 												<label htmlFor={`${q}-row`} className="sr-only">
 													{diagResult?.homeTeam
 														? `${diagResult.homeTeam.abbreviation} score`
@@ -578,7 +581,7 @@ export default function AdminPage() {
 													className="w-full rounded border border-input bg-background px-2 py-1.5 text-sm"
 												/>
 											</div>
-											<div>
+											<div className="flex-1">
 												<label htmlFor={`${q}-col`} className="sr-only">
 													{diagResult?.awayTeam
 														? `${diagResult.awayTeam.abbreviation} score`
@@ -604,26 +607,30 @@ export default function AdminPage() {
 												/>
 											</div>
 										</div>
-										<label className="flex items-center gap-1.5 cursor-pointer">
-											<input
-												id={`${q}-complete`}
-												type="checkbox"
-												checked={quarters[q]?.complete ?? false}
-												onChange={(e) =>
-													setQuarters((prev) => ({
-														...prev,
-														[q]: {
-															...prev[q],
-															complete: e.target.checked,
-														},
-													}))
-												}
-												className="h-4 w-4 rounded border-border accent-primary"
-											/>
-											<span className="text-xs text-muted-foreground">
-												Final
-											</span>
-										</label>
+										{q === "Q4" ? (
+											<span className="w-[60px]" />
+										) : (
+											<label className="flex items-center gap-1.5 cursor-pointer">
+												<input
+													id={`${q}-complete`}
+													type="checkbox"
+													checked={quarters[q]?.complete ?? false}
+													onChange={(e) =>
+														setQuarters((prev) => ({
+															...prev,
+															[q]: {
+																...prev[q],
+																complete: e.target.checked,
+															},
+														}))
+													}
+													className="h-4 w-4 rounded border-border accent-primary"
+												/>
+												<span className="text-xs text-muted-foreground">
+													Final
+												</span>
+											</label>
+										)}
 									</div>
 								))}
 							</div>
@@ -631,29 +638,12 @@ export default function AdminPage() {
 								{diagResult?.homeTeam && diagResult?.awayTeam
 									? `${diagResult.homeTeam.name} = Row (top numbers on grid), ${diagResult.awayTeam.name} = Col (side numbers).`
 									: "Row = home team (top numbers on grid), Col = away team (side numbers)."}{" "}
-								Scores must be 0&ndash;99. Check &quot;Final&quot;
-								when a quarter is complete.
+								Scores must be 0&ndash;99 (cumulative). Check &quot;Final&quot;
+								when Q1&ndash;Q3 are complete. The Final row is the end-of-game score.
 							</p>
 						</div>
 
-						{/* Game complete toggle */}
-						<label className="flex items-center gap-3 rounded-md border border-border p-3 cursor-pointer">
-							<input
-								id="game-complete"
-								type="checkbox"
-								checked={gameComplete}
-								onChange={(e) => setGameComplete(e.target.checked)}
-								className="h-4 w-4 rounded border-border accent-primary"
-							/>
-							<div>
-								<span className="text-sm font-medium text-foreground">
-									Game Complete
-								</span>
-								<p className="text-xs text-muted-foreground">
-									Mark the entire game as final.
-								</p>
-							</div>
-						</label>
+						{/* Game complete is auto-derived: when Final (Q4) has scores, game is complete */}
 
 						{scoresMessage && (
 							<p
