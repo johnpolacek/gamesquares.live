@@ -67,7 +67,7 @@ test.describe("Landing", () => {
 			route.fulfill({
 				status: 200,
 				contentType: "application/json",
-				body: JSON.stringify({ poolsCount: 100, displayPrice: "$10" }),
+				body: JSON.stringify({ poolsCount: 100, displayPrice: "$5" }),
 			}),
 		);
 
@@ -88,8 +88,8 @@ test.describe("Landing", () => {
 		).toBeVisible({ timeout: 5000 });
 		await expect(page.getByTestId("sponsor-cta")).toBeVisible();
 		await expect(page.getByTestId("sponsor-cta")).toContainText(
-			"Sponsor 100 pools",
+			"Unlock the next 100",
 		);
-		await expect(page.getByTestId("sponsor-cta")).toContainText("$10");
+		await expect(page.getByTestId("sponsor-cta")).toContainText("$5");
 	});
 });

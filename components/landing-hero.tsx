@@ -116,7 +116,7 @@ function YourPools({
 			<h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
 				Your Pools
 			</h3>
-			<div className="flex flex-col gap-3 min-w-sm">
+			<div className="flex flex-col gap-3 min-w-[270px]">
 				{merged.map((pool) => (
 					<div
 						key={pool.slug}
@@ -651,27 +651,35 @@ export function LandingHero() {
 						</p>
 					)}
 
-					{showSponsor && (
-						<div className="flex flex-col gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4 animate-fade-in-up">
-							<p className="text-sm text-foreground">
-								Pool creation limit reached. You can sponsor the next{" "}
-								<strong>{sponsorConfig?.poolsCount ?? 100} pools</strong> for{" "}
-								<strong>{sponsorConfig?.displayPrice ?? "$10"}</strong> and then
-								create yours.
-							</p>
-							<button
-								data-testid="sponsor-cta"
-								onClick={handleSponsor}
-								disabled={sponsorLoading}
-								className="w-full rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-all active:scale-[0.98] disabled:opacity-60"
-								type="button"
-							>
-								{sponsorLoading
-									? "Redirecting…"
-									: `Sponsor ${sponsorConfig?.poolsCount ?? 100} pools — ${sponsorConfig?.displayPrice ?? "$10"}`}
-							</button>
-						</div>
-					)}
+					{showSponsor && (() => {
+						const count = sponsorConfig?.poolsCount ?? 100;
+						const price = sponsorConfig?.displayPrice ?? "$5";
+						const othersCount = Math.max(0, count - 1);
+						return (
+							<div className="flex flex-col gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4 animate-fade-in-up">
+								<p className="text-sm font-medium text-foreground">
+									We're at capacity — but you can change that.
+								</p>
+								<p className="text-sm text-foreground">
+									For <strong>{price}</strong> you sponsor the next{" "}
+									<strong>{count} pool creations</strong>. That's{" "}
+									<strong>{othersCount} other groups</strong> who get to play for
+									free because of you — and you get to create yours right after.
+								</p>
+								<button
+									data-testid="sponsor-cta"
+									onClick={handleSponsor}
+									disabled={sponsorLoading}
+									className="w-full rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-all active:scale-[0.98] disabled:opacity-60"
+									type="button"
+								>
+									{sponsorLoading
+										? "Redirecting…"
+										: `Unlock the next ${count} — ${price}`}
+								</button>
+							</div>
+						);
+					})()}
 
 					<button
 						data-testid="landing-create-pool-submit"
