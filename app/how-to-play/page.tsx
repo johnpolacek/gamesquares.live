@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-	title: "How to Play Super Bowl Squares - GameSquares.live",
+	title: "How to Play Football Squares - GameSquares.live",
 	description:
-		"Learn how Super Bowl Squares works: the 10x10 grid, how numbers are assigned, and how winners are determined each quarter.",
+		"Learn how football squares works: the 10x10 grid, how numbers are assigned, and how winners are determined each quarter.",
 };
 
 export default function HowToPlayPage() {
@@ -13,7 +13,7 @@ export default function HowToPlayPage() {
 			<div className="mx-auto max-w-2xl space-y-8 opacity-0 animate-fade-in-up">
 				<div className="flex items-center justify-between">
 					<h1 className="text-2xl font-bold text-foreground">
-						How to Play Super Bowl Squares
+						How to Play Football Squares
 					</h1>
 					<Link
 						href="/"
@@ -26,14 +26,13 @@ export default function HowToPlayPage() {
 				<div className="space-y-6 text-sm leading-relaxed text-foreground/90">
 					<section className="space-y-2">
 						<h2 className="text-base font-semibold text-foreground">
-							What are Super Bowl Squares?
+							What are Football Squares?
 						</h2>
 						<p>
-							Super Bowl Squares (also called &quot;football squares&quot; or
-							&quot;the grid&quot;) is one of the most popular ways to follow the
-							big game with friends, family, or coworkers. It&apos;s simple,
-							fun, and completely luck-based &mdash; no football knowledge
-							required.
+							Football squares (also called &quot;the grid&quot;) is one of the
+							most popular ways to follow the big game with friends, family, or
+							coworkers. It&apos;s simple, fun, and completely luck-based
+							&mdash; no football knowledge required.
 						</p>
 						<p>
 							The game uses a <strong>10&times;10 grid</strong> with 100
@@ -129,7 +128,7 @@ export default function HowToPlayPage() {
 							About GameSquares.live
 						</h2>
 						<p>
-							GameSquares.live makes it easy to run a Super Bowl Squares pool
+							GameSquares.live makes it easy to run a football squares pool
 							online. Create a pool in seconds &mdash; no account needed. Share
 							the link with your group, and everyone can pick their squares from
 							their phone. Scores update live so you can follow along in

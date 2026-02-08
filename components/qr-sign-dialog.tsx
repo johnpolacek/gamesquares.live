@@ -108,7 +108,7 @@ export function QrSignDialog({
 <body>
 <div class="sign">
   <h1>${escapeHtml(poolTitle)}</h1>
-  <p class="subtitle">Super Bowl Squares</p>
+  <p class="subtitle">Football Squares</p>
   <div class="qr-wrap">
     <img src="${qrDataUrl}" width="220" height="220" alt="QR Code" />
   </div>
@@ -184,7 +184,7 @@ export function QrSignDialog({
 						<h4 className="text-lg font-extrabold text-black leading-tight">
 							{poolTitle}
 						</h4>
-						<p className="text-xs text-gray-500">Super Bowl Squares</p>
+						<p className="text-xs text-gray-500">Football Squares</p>
 					</div>
 
 					<div className="inline-block rounded-lg border-2 border-black p-2.5">

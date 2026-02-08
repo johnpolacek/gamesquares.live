@@ -191,7 +191,7 @@ export const SceneCreate = forwardRef<HTMLDivElement>((_, ref) => (
 				<div className="flex flex-col gap-1.5">
 					<span className="text-xs font-medium tracking-wide uppercase text-muted-foreground">Pool title</span>
 					<div className="w-full rounded-lg bg-card px-4 py-3 text-base text-foreground ring-1 ring-border">
-						<span className="typing-text">Super Bowl Party 2026</span>
+						<span className="typing-text">Game Day Party 2026</span>
 					</div>
 				</div>
 				<div className="flex flex-col gap-1.5">
@@ -266,7 +266,7 @@ export const SceneShare = forwardRef<HTMLDivElement>((_, ref) => (
 			{/* Chat mockup */}
 			<div className="scene-el w-full flex flex-col gap-2.5">
 				<div className="chat-bubble self-end rounded-2xl rounded-br-sm bg-primary px-4 py-2.5 text-sm text-primary-foreground max-w-[80%]">
-					Hey! Join my Super Bowl squares pool
+					Hey! Join my football squares pool
 				</div>
 				<div className="chat-bubble self-end rounded-2xl rounded-br-sm bg-primary px-4 py-2.5 text-primary-foreground max-w-[80%] font-mono text-xs">
 					gamesquares.live/play/DEMO01
