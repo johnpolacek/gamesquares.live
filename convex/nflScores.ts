@@ -183,6 +183,182 @@ function quartersEqual(
 }
 
 /**
+ * Read-only diagnostic: fetch ESPN scoreboard and return all parsed data
+ * WITHOUT writing anything to the database. Used by the admin status page
+ * to verify the feed is working before game day.
+ */
+export const diagnoseEspnFeed = action({
+	args: {},
+	handler: async (ctx) => {
+		// 1. Fetch ESPN
+		let espnStatus: number;
+		let data: EspnScoreboard;
+		try {
+			const res = await fetch(ESPN_SCOREBOARD_URL);
+			espnStatus = res.status;
+			if (!res.ok) {
+				return {
+					ok: false as const,
+					error: `ESPN returned HTTP ${res.status}`,
+					espnStatus,
+				};
+			}
+			data = (await res.json()) as EspnScoreboard;
+		} catch (err) {
+			return {
+				ok: false as const,
+				error: `ESPN fetch failed: ${err instanceof Error ? err.message : String(err)}`,
+				espnStatus: 0,
+			};
+		}
+
+		const events = data.events ?? [];
+		const event = findSuperBowl(events);
+
+		if (!event?.competitions?.[0]?.competitors?.length) {
+			return {
+				ok: true as const,
+				espnStatus,
+				totalEvents: events.length,
+				superBowlFound: false,
+				eventName: null,
+				eventId: null,
+				gameState: null,
+				period: null,
+				gameCompleted: false,
+				homeTeam: null,
+				awayTeam: null,
+				quarters: [] as Quarter[],
+				gameComplete: false,
+				possession: "none" as const,
+				downDistance: null as string | null,
+				isRedZone: false,
+				currentDbGame: null as null,
+				wouldUpdate: false,
+				wouldUpdateReason: "no game found on ESPN",
+			};
+		}
+
+		const comp = event.competitions[0];
+		const competitors = comp.competitors ?? [];
+		const home = competitors.find((c) => c.homeAway === "home");
+		const away = competitors.find((c) => c.homeAway === "away");
+
+		const gameState = event.status?.type?.state ?? "pre";
+		const gameCompleted = event.status?.type?.completed ?? false;
+		const period = event.status?.period ?? 0;
+
+		const homeTeam = home
+			? {
+					name: home.team?.displayName ?? "Unknown",
+					abbreviation: home.team?.abbreviation ?? "???",
+					score: home.score ?? "0",
+					id: home.id ?? home.team?.id ?? null,
+				}
+			: null;
+		const awayTeam = away
+			? {
+					name: away.team?.displayName ?? "Unknown",
+					abbreviation: away.team?.abbreviation ?? "???",
+					score: away.score ?? "0",
+					id: away.id ?? away.team?.id ?? null,
+				}
+			: null;
+
+		// Build quarters (even for pre-game, for display purposes)
+		let quarters: Quarter[] = [];
+		let gameComplete = false;
+		if (home && away && gameState !== "pre") {
+			const result = buildQuarters(home, away, period, gameState, gameCompleted);
+			quarters = result.quarters;
+			gameComplete = result.gameComplete;
+		}
+
+		// Extract possession
+		const situation = comp.situation;
+		let possession: "home" | "away" | "none" = "none";
+		if (situation?.possession && home && away) {
+			const homeTeamId = home.id ?? home.team?.id;
+			const awayTeamId = away.id ?? away.team?.id;
+			if (situation.possession === homeTeamId) {
+				possession = "home";
+			} else if (situation.possession === awayTeamId) {
+				possession = "away";
+			}
+		}
+		const downDistance =
+			situation?.possessionText ?? situation?.downDistanceText ?? null;
+		const isRedZone = situation?.isRedZone ?? false;
+
+		// Compare with current DB state
+		const latestGame = await ctx.runQuery(internal.games.getLatestGame, {});
+		const currentDbGame = latestGame
+			? {
+					name: latestGame.name,
+					updatedAt: latestGame.updatedAt,
+					quartersCount: latestGame.quarters.length,
+					gameComplete: latestGame.gameComplete ?? false,
+					possession: latestGame.possession ?? "none",
+					downDistance: latestGame.downDistance ?? null,
+				}
+			: null;
+
+		// Determine if fetchAndUpdateScores would write
+		let wouldUpdate = false;
+		let wouldUpdateReason = "";
+		if (gameState === "pre") {
+			wouldUpdateReason = "game not started yet (pre)";
+		} else if (!home || !away) {
+			wouldUpdateReason = "missing home/away teams";
+		} else if (!latestGame) {
+			wouldUpdate = true;
+			wouldUpdateReason = "no existing game in DB — would insert first row";
+		} else {
+			const sameScores = quartersEqual(quarters, latestGame.quarters);
+			const sameComplete =
+				(gameComplete || false) === (latestGame.gameComplete || false);
+			const samePossession =
+				(possession || "none") === (latestGame.possession || "none");
+			const sameDownDistance =
+				(downDistance || "") === (latestGame.downDistance || "");
+			if (sameScores && sameComplete && samePossession && sameDownDistance) {
+				wouldUpdateReason = "all data unchanged — dedup would skip";
+			} else {
+				wouldUpdate = true;
+				const changes: string[] = [];
+				if (!sameScores) changes.push("scores changed");
+				if (!sameComplete) changes.push("gameComplete changed");
+				if (!samePossession) changes.push("possession changed");
+				if (!sameDownDistance) changes.push("downDistance changed");
+				wouldUpdateReason = `would update: ${changes.join(", ")}`;
+			}
+		}
+
+		return {
+			ok: true as const,
+			espnStatus,
+			totalEvents: events.length,
+			superBowlFound: true,
+			eventName: event.name ?? null,
+			eventId: event.id ?? null,
+			gameState,
+			period,
+			gameCompleted,
+			homeTeam,
+			awayTeam,
+			quarters,
+			gameComplete,
+			possession,
+			downDistance,
+			isRedZone,
+			currentDbGame,
+			wouldUpdate,
+			wouldUpdateReason,
+		};
+	},
+});
+
+/**
  * Fetch NFL scoreboard from ESPN, find the Super Bowl,
  * and update the global game with current quarter scores.
  *
