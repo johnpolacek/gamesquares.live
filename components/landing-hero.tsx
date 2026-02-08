@@ -30,6 +30,8 @@ type MergedPool = {
 function mergePoolsBySlug(
 	pools: PoolHistoryEntry[],
 	createdPoolSlug: string | null,
+	/** When true (user has createdAt but no stored slug), treat single pool as created by user (legacy fallback) */
+	singlePoolAsCreator: boolean,
 ): MergedPool[] {
 	const bySlug = new Map<string, MergedPool>();
 	for (const entry of pools) {
@@ -51,20 +53,44 @@ function mergePoolsBySlug(
 			});
 		}
 	}
-	return [...bySlug.values()].sort((a, b) => b.joinedAt - a.joinedAt);
+	let merged = [...bySlug.values()].sort((a, b) => b.joinedAt - a.joinedAt);
+	// Legacy: user created a pool before we stored createdPoolSlug; they have only one pool and it's shown as Player → treat as creator
+	if (singlePoolAsCreator && merged.length === 1 && !merged[0].isAdmin) {
+		merged = [{ ...merged[0], isAdmin: true }];
+	}
+	return merged;
 }
 
 function YourPools({
 	pools,
 	createdPoolSlug,
+	hasCreatedPoolNoSlug,
 	onRemove,
 }: {
 	pools: PoolHistoryEntry[];
 	createdPoolSlug?: string | null;
+	/** True when user has createdAt (so we show "You already created") but no stored createdPoolSlug (legacy) */
+	hasCreatedPoolNoSlug?: boolean;
 	onRemove: (slug: string) => void;
 }) {
-	const merged = mergePoolsBySlug(pools, createdPoolSlug ?? null);
+	const merged = mergePoolsBySlug(
+		pools,
+		createdPoolSlug ?? null,
+		hasCreatedPoolNoSlug ?? false,
+	);
 	if (merged.length === 0) return null;
+	if (process.env.NODE_ENV === "development" && typeof window !== "undefined" && (window.location?.search?.includes("debug=pools") || localStorage.getItem("gamesquares_debug_pools") === "1")) {
+		console.log("[YourPools] debug", {
+			createdPoolSlug: createdPoolSlug ?? null,
+			hasCreatedPoolNoSlug: hasCreatedPoolNoSlug ?? false,
+			poolHistory: pools,
+			merged: merged.map((p) => ({ slug: p.slug, title: p.title, isAdmin: p.isAdmin })),
+			localStorage: {
+				createdAt: typeof localStorage !== "undefined" ? localStorage.getItem(CREATED_AT_KEY) : null,
+				createdPoolSlug: typeof localStorage !== "undefined" ? localStorage.getItem(CREATED_POOL_SLUG_KEY) : null,
+			},
+		});
+	}
 	return (
 		<section className="w-full max-w-md opacity-0 animate-fade-in-up">
 			<h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
@@ -307,6 +333,7 @@ export function LandingHero() {
 					<YourPools
 						pools={poolHistory}
 						createdPoolSlug={createdPoolSlug}
+						hasCreatedPoolNoSlug={createdAt !== null && !createdPoolSlug}
 						onRemove={handleRemovePool}
 					/>
 					<FooterLinks />
@@ -357,6 +384,7 @@ export function LandingHero() {
 					<YourPools
 						pools={poolHistory}
 						createdPoolSlug={createdPoolSlug}
+						hasCreatedPoolNoSlug={createdAt !== null && !createdPoolSlug}
 						onRemove={handleRemovePool}
 					/>
 					<FooterLinks />
@@ -614,6 +642,7 @@ export function LandingHero() {
 						<YourPools
 							pools={poolHistory}
 							createdPoolSlug={createdPoolSlug}
+							hasCreatedPoolNoSlug={createdAt !== null && !createdPoolSlug}
 							onRemove={handleRemovePool}
 						/>
 					</div>
