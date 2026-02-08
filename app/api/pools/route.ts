@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { api } from "@/convex/_generated/api";
 import { sendAdminLoginEmail } from "@/lib/email";
 import { ROUTES } from "@/lib/types";
+import { originWithoutWww } from "@/lib/utils";
 
 /**
  * Verify a reCAPTCHA v3 token with Google's API.
@@ -87,9 +88,10 @@ export async function POST(request: Request) {
 			tokenHash,
 		});
 
-		const origin =
+		const rawOrigin =
 			request.headers.get("origin") ??
 			request.url.replace(/\/api\/pools.*$/, "");
+		const origin = originWithoutWww(rawOrigin);
 		const adminLoginLink = `${origin}${ROUTES.ADMIN_LOGIN_PREFIX}?token=${rawToken}`;
 		const poolLink = `${origin}${ROUTES.PLAY_PREFIX}${slug}`;
 		const viewLink = `${origin}${ROUTES.VIEW_PREFIX}${slug}`;

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { sendAdminLoginEmail } from "@/lib/email";
 import { ROUTES } from "@/lib/types";
+import { originWithoutWww } from "@/lib/utils";
 
 /**
  * Sends the admin magic link email. Used after pool creation and for resend.
@@ -24,9 +25,10 @@ export async function POST(request: Request) {
 			);
 		}
 
-		const origin =
+		const rawOrigin =
 			request.headers.get("origin") ??
 			request.url.replace(/\/api\/email\/admin-login.*$/, "");
+		const origin = originWithoutWww(rawOrigin);
 		const adminLoginLink = `${origin}${ROUTES.ADMIN_LOGIN_PREFIX}?token=${adminLoginToken}`;
 		const poolLink = `${origin}${ROUTES.PLAY_PREFIX}${slug}`;
 		const viewLink = `${origin}${ROUTES.VIEW_PREFIX}${slug}`;
