@@ -127,6 +127,11 @@
 	--color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* Hide reCAPTCHA v3 badge (attribution text is in footer per Google's policy) */
+.grecaptcha-badge {
+	visibility: hidden !important;
+}
+
 /* Remotion-inspired timing: ease-out for entrances, ~250–350ms (smooth, no bounce) */
 @layer base {
 	* {

@@ -173,6 +173,13 @@ function FooterLinks() {
 					Terms of Use
 				</Link>
 			</div>
+			<p className="text-[10px] text-muted-foreground/60 text-center max-w-xs">
+				Protected by reCAPTCHA.{" "}
+				<a href="https://policies.google.com/privacy" className="underline" target="_blank" rel="noopener noreferrer">Privacy</a>
+				{" & "}
+				<a href="https://policies.google.com/terms" className="underline" target="_blank" rel="noopener noreferrer">Terms</a>
+				{" "}apply.
+			</p>
 		</footer>
 	);
 }
