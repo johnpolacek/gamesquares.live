@@ -531,7 +531,7 @@ export function LandingHero() {
 							type="email"
 							value={adminEmail}
 							onChange={(e) => setAdminEmail(e.target.value)}
-							placeholder="you@example.com"
+							placeholder="Enter your email"
 							className="w-full rounded-lg bg-card px-4 py-3 text-base text-foreground ring-1 ring-border placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
 						/>
 					</div>
